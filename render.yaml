@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: the-bare-basics-of-ai
+    env: python
+    buildCommand: pip install -r requirements.txt && chmod +x predeploy.sh && ./predeploy.sh
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+    autoDeploy: true 

@@ -1,0 +1,13 @@
+flask
+flask-cors
+numpy
+pandas
+scikit-learn
+matplotlib
+shap
+torch
+transformers
+pillow
+scikit-fuzzy
+firebase-admin
+gunicorn

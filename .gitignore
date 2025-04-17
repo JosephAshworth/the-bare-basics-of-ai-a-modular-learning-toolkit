@@ -1,0 +1,19 @@
+# Credentials and sensitive data
+firebase-credentials.json
+*.pem
+*.key
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+
+# Virtual Environment
+venv/
+env/
+
+# Large model files (if models should be downloaded at runtime)
+saved_models/ 

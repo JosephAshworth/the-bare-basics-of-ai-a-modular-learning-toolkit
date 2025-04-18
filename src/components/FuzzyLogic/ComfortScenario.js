@@ -35,27 +35,21 @@ const ComfortScenario = ({ isDarkMode, themeColors }) => {
     try {
       setLoading(true);
       setError(null);
-      // Try with api prefix first
-      try {
-        console.log('Attempting to calculate comfort with /api prefix...');
-        const response = await apiService.post('/api/fuzzy-logic/comfort', {
-          temperature,
-          humidity
-        });
-        setComfortResult(response.data.result);
-      } catch (apiError) {
-        console.log('Retrying without /api prefix...');
-        // If first attempt fails, try without api prefix
-        const response = await apiService.post('/fuzzy-logic/comfort', {
-          temperature,
-          humidity
-        });
-        setComfortResult(response.data.result);
-      }
+      setComfortResult('');
+      
+      console.log('Calculating comfort level with temperature:', temperature, 'and humidity:', humidity);
+      
+      // Use the special fuzzy logic request method that tries multiple endpoint variants
+      const response = await apiService.fuzzyLogicRequest('/fuzzy-logic/comfort', {
+        temperature,
+        humidity
+      });
+      
+      console.log('Comfort calculation successful:', response.data);
+      setComfortResult(response.data.result);
     } catch (error) {
       console.error('Error calculating comfort result:', error);
-      setError('Could not connect to the backend service. Please try again later.');
-      setComfortResult('');
+      setError('Could not connect to the backend service. Please try again later. Check the browser console for more details.');
     } finally {
       setLoading(false);
     }

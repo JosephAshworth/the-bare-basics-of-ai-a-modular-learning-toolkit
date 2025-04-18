@@ -35,28 +35,21 @@ const AirQualityScenario = ({ isDarkMode, themeColors }) => {
     try {
       setLoading(true);
       setError(null);
+      setAirQualityResult('');
       
-      // Try with api prefix first
-      try {
-        console.log('Attempting to calculate air quality with /api prefix...');
-        const response = await apiService.post('/api/fuzzy-logic/air-quality', {
-          co2,
-          pm25
-        });
-        setAirQualityResult(response.data.result);
-      } catch (apiError) {
-        console.log('Retrying without /api prefix...');
-        // If first attempt fails, try without api prefix
-        const response = await apiService.post('/fuzzy-logic/air-quality', {
-          co2,
-          pm25
-        });
-        setAirQualityResult(response.data.result);
-      }
+      console.log('Calculating air quality with CO2:', co2, 'and PM2.5:', pm25);
+      
+      // Use the special fuzzy logic request method that tries multiple endpoint variants
+      const response = await apiService.fuzzyLogicRequest('/fuzzy-logic/air-quality', {
+        co2,
+        pm25
+      });
+      
+      console.log('Air quality calculation successful:', response.data);
+      setAirQualityResult(response.data.result);
     } catch (error) {
       console.error('Error calculating air quality result:', error);
-      setError('Could not connect to the backend service. Please try again later.');
-      setAirQualityResult('');
+      setError('Could not connect to the backend service. Please try again later. Check the browser console for more details.');
     } finally {
       setLoading(false);
     }

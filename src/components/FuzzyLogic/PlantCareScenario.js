@@ -69,6 +69,13 @@ const PlantCareScenario = ({ isDarkMode, themeColors }) => {
       setError(null);
       setPlantCareResult(null);
       
+      console.log('Calculating plant care recommendations with:', {
+        soilMoisture,
+        lightLevel,
+        plantTemp,
+        plantType
+      });
+      
       const requestData = {
         soil_moisture: soilMoisture,
         light_level: lightLevel,
@@ -76,20 +83,14 @@ const PlantCareScenario = ({ isDarkMode, themeColors }) => {
         plant_type: plantType
       };
       
-      // Try with api prefix first
-      try {
-        console.log('Attempting to calculate plant care with /api prefix...');
-        const response = await apiService.post('/api/fuzzy-logic/plant-care', requestData);
-        setPlantCareResult(response.data);
-      } catch (apiError) {
-        console.log('Retrying without /api prefix...');
-        // If first attempt fails, try without api prefix
-        const response = await apiService.post('/fuzzy-logic/plant-care', requestData);
-        setPlantCareResult(response.data);
-      }
+      // Use the special fuzzy logic request method that tries multiple endpoint variants
+      const response = await apiService.fuzzyLogicRequest('/fuzzy-logic/plant-care', requestData);
+      
+      console.log('Plant care calculation successful:', response.data);
+      setPlantCareResult(response.data);
     } catch (error) {
       console.error('Error calculating plant care recommendations:', error);
-      setError('Could not connect to the backend service. Please try again later.');
+      setError('Could not connect to the backend service. Please try again later. Check the browser console for more details.');
     } finally {
       setLoading(false);
     }

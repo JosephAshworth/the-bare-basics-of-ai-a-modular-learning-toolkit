@@ -71,6 +71,50 @@ const apiService = {
     const url = `${backendUrl}${endpoint}`;
     console.log(`🔗 Full URL: ${url}`);
     return url;
+  },
+  
+  // Special method for fuzzy logic endpoints that tries multiple path formats
+  fuzzyLogicRequest: async (endpoint, data) => {
+    console.log(`🧠 Fuzzy Logic Request for endpoint: ${endpoint}`);
+    
+    // List of endpoint variants to try
+    const variants = [
+      // With /api prefix
+      `/api${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`,
+      // Without /api prefix
+      endpoint.startsWith('/') ? endpoint : '/' + endpoint,
+      // Direct to fuzzy-logic without prefix
+      endpoint.includes('fuzzy-logic') ? endpoint : `/fuzzy-logic/${endpoint.replace(/^\//, '')}`
+    ];
+    
+    // Log all variants we'll try
+    console.log(`🔄 Will try the following endpoint variants:`, variants);
+    
+    // Keep track of all errors to provide better diagnostics
+    const errors = [];
+    
+    // Try each variant in sequence
+    for (const variant of variants) {
+      try {
+        console.log(`🔄 Trying endpoint variant: ${variant}`);
+        const response = await apiInstance.post(variant, data);
+        console.log(`✅ Successful response from ${variant}`);
+        return response;
+      } catch (error) {
+        const errorInfo = {
+          endpoint: variant,
+          status: error.response?.status,
+          message: error.message,
+          data: error.response?.data
+        };
+        console.error(`❌ Failed with variant ${variant}:`, errorInfo);
+        errors.push(errorInfo);
+      }
+    }
+    
+    // If we get here, all variants failed
+    console.error(`❌ All endpoint variants failed:`, errors);
+    throw new Error('All endpoint variants failed. See console for details.');
   }
 };
 

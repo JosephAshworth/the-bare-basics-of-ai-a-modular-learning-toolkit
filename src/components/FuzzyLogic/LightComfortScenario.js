@@ -35,21 +35,29 @@ const LightComfortScenario = ({ isDarkMode, themeColors }) => {
     try {
       setLoading(true);
       setError(null);
-      setLightComfortResult('');
       
-      console.log('Calculating light comfort with intensity:', intensity, 'and color temperature:', colorTemp);
-      
-      // Use the special fuzzy logic request method that tries multiple endpoint variants
-      const response = await apiService.fuzzyLogicRequest('/fuzzy-logic/light-comfort', {
-        intensity,
-        color_temp: colorTemp
-      });
-      
-      console.log('Light comfort calculation successful:', response.data);
-      setLightComfortResult(response.data.result);
+      // Try with api prefix first
+      try {
+        console.log('Attempting to calculate light comfort with /api prefix...');
+        const response = await apiService.post('/api/fuzzy-logic/light-comfort', {
+          intensity,
+          color_temp: colorTemp
+        });
+        setLightComfortResult(response.data.result);
+      } catch (apiError) {
+        console.log('Retrying without /api prefix...', apiError);
+        
+        // If first attempt fails, try without api prefix
+        const response = await apiService.post('/fuzzy-logic/light-comfort', {
+          intensity,
+          color_temp: colorTemp
+        });
+        setLightComfortResult(response.data.result);
+      }
     } catch (error) {
       console.error('Error calculating light comfort result:', error);
-      setError('Could not connect to the backend service. Please try again later. Check the browser console for more details.');
+      setError('Could not connect to the backend service. Please try again later.');
+      setLightComfortResult('');
     } finally {
       setLoading(false);
     }

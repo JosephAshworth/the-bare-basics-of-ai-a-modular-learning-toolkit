@@ -22,29 +22,6 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
     checkModuleStatus();
   }, [moduleId]);
 
-  // Helper to get the auth token
-  const getAuthToken = async () => {
-    // First try to get from localStorage for better performance
-    const localToken = localStorage.getItem('token');
-    if (localToken) {
-      console.log('🔑 Using token from localStorage for module completion');
-      return localToken;
-    }
-    
-    // If not available in localStorage, get fresh token from Firebase
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error('Not authenticated');
-    }
-    
-    console.log('🔑 Getting fresh token from Firebase for module completion');
-    const token = await currentUser.getIdToken(true);
-    
-    // Store it in localStorage for future use
-    localStorage.setItem('token', token);
-    return token;
-  };
-
   const checkModuleStatus = async () => {
     // Skip server calls if we've previously encountered persistent errors
     if (skipServerCalls) {
@@ -60,12 +37,12 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
         return; // Not authenticated
       }
       
-      // Get the authentication token using our helper function
-      const token = await getAuthToken();
+      // Get the authentication token
+      const token = await currentUser.getIdToken();
       
       console.log(`Checking status for module: ${moduleId}`);
       
-      // Get module progress with the correct API endpoint
+      // Try with /api prefix first
       try {
         const response = await apiService.get('/api/modules/progress', {
           headers: {
@@ -83,10 +60,29 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
         } else {
           console.log(`Module ${moduleId} is not completed`);
         }
-      } catch (error) {
-        console.error(`API request failed for modules progress: ${error.message}`);
-        // Local fallback - don't show error to user but log it
-        setSkipServerCalls(true);
+      } catch (firstError) {
+        // Try without /api prefix
+        try {
+          console.log('Retrying without /api prefix', firstError);
+          const response = await apiService.get('/modules/progress', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          // Find this module in the response
+          const module = response.data.find(m => m.id === moduleId);
+          if (module && module.completed) {
+            console.log(`Module ${moduleId} is already completed`);
+            setCompleted(true);
+          } else {
+            console.log(`Module ${moduleId} is not completed`);
+          }
+        } catch (secondError) {
+          console.error(`Both API paths failed for modules progress: ${secondError.message}`);
+          // Local fallback - don't show error to user but log it
+          setSkipServerCalls(true);
+        }
       }
     } catch (err) {
       console.error('Error checking module status:', err);
@@ -111,8 +107,15 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
     }
     
     try {      
+      // First try to update the server
+      const currentUser = auth.currentUser;
+      
+      if (!currentUser) {
+        throw new Error('Not authenticated');
+      }
+      
       // Get the authentication token
-      const token = await getAuthToken();
+      const token = await currentUser.getIdToken();
       
       // Determine which endpoint to use
       let endpoint = useFallbackEndpoint 
@@ -122,7 +125,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       console.log(`Using endpoint: ${endpoint} (fallback: ${useFallbackEndpoint})`);
       
       try {
-        // Send the update to the server with the correct endpoint
+        // Send the update to the server with the first endpoint
         await apiService.post(endpoint, 
           { completed: newCompleted },
           {
@@ -132,46 +135,67 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
             timeout: 10000 // 10 second timeout
           }
         );
+      } catch (firstError) {
+        // If first endpoint fails, try without /api prefix
+        console.log('First endpoint failed, trying without /api prefix', firstError);
         
-        // Show success message
-        setSnackbarOpen(true);
-      } catch (error) {
-        // If we haven't tried the fallback yet and got a 404 error, try the fallback endpoint
-        if (!useFallbackEndpoint && error.response && error.response.status === 404) {
-          console.log('Main endpoint failed with 404, trying fallback endpoint...');
-          setUseFallbackEndpoint(true);
-          // Try again with fallback endpoint
-          handleCompleteModule();
-          return;
-        }
+        endpoint = useFallbackEndpoint 
+          ? `/complete-module-simple/${moduleId}`
+          : `/modules/${moduleId}/complete`;
         
-        // Handle different types of errors
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Server response error:', {
-            status: error.response.status,
-            data: error.response.data,
-            headers: error.response.headers
-          });
-          setError(`Server error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
-        } else if (error.request) {
-          // The request was made but no response was received
-          console.error('No response received:', error.request);
-          setError('Could not connect to the server. Your progress has been saved locally.');
-          setSkipServerCalls(true);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          setError(`Error: ${error.message}`);
-        }
+        console.log(`Using alternative endpoint: ${endpoint}`);
         
-        setSnackbarOpen(true);
-        throw error;
+        // Send the update to the server with alternative endpoint
+        await apiService.post(endpoint, 
+          { completed: newCompleted },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            timeout: 10000 // 10 second timeout
+          }
+        );
       }
+      
+      // Show success message
+      setSnackbarOpen(true);
     } catch (err) {
       console.error('Error updating module completion:', err);
+      
+      // If we haven't tried the fallback yet and got a 404 error, try the fallback endpoint
+      if (!useFallbackEndpoint && err.response && err.response.status === 404) {
+        console.log('Main endpoint failed with 404, trying fallback endpoint...');
+        setUseFallbackEndpoint(true);
+        // Try again with fallback endpoint
+        handleCompleteModule();
+        return;
+      }
+      
+      // Provide more specific error messages
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Server response error:', {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers
+        });
+        setError(`Server error: ${err.response.status} - ${err.response.data.error || 'Unknown error'}`);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error('No response received:', err.request);
+        setError('Could not connect to the server. Your progress has been saved locally.');
+        setSkipServerCalls(true);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError(`Error: ${err.message}`);
+      }
+      
+      setSnackbarOpen(true);
     } finally {
-      setLoading(false);
+      if (!useFallbackEndpoint) {
+        setLoading(false);
+      }
     }
   };
 

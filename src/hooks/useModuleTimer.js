@@ -29,6 +29,10 @@ const useModuleTimer = (moduleId) => {
         // Skip API calls if we previously encountered a problem
         if (shouldSkipApiCalls) {
           console.log(`Skipping timer API calls due to previous errors for module: ${moduleId}`);
+          // Pretend it worked for better UX
+          if (isMounted) {
+            setTimerStarted(true);
+          }
           return;
         }
         
@@ -36,47 +40,44 @@ const useModuleTimer = (moduleId) => {
         if (isStartingTimerRef.current) return;
         
         // Only start if user is logged in, timer not already started, and not already stopped
-        if (!auth.currentUser) {
-          console.log(`⚠️ Cannot start timer for ${moduleId}: User not logged in`);
-          return;
-        }
-        
-        if (timerStarted) {
-          console.log(`Timer already started for ${moduleId}, skipping start request`);
-          return;
-        }
-        
-        if (timerStopped) {
-          console.log(`Timer already stopped for ${moduleId}, skipping start request`);
-          return;
-        }
+        if (!auth.currentUser || timerStarted || timerStopped) return;
         
         // Set flag to prevent duplicate calls
         isStartingTimerRef.current = true;
         
+        const token = await auth.currentUser.getIdToken();
+        
+        // Try the API paths with and without the /api prefix
         try {
-          console.log(`Starting timer for module: ${moduleId}`);
-          
-          // Since the apiService now handles token management automatically in its interceptors,
-          // we don't need to explicitly provide the token here
-          await apiService.post(`/api/modules/${moduleId}/start-timer`, {});
-          console.log(`🔹 Timer start API call for ${moduleId} completed successfully`);
-          
-          if (isMounted) {
-            setTimerStarted(true);
-            console.log(`Started timer for module: ${moduleId}`);
+          console.log(`Attempting to start timer for module: ${moduleId}`);
+          // Start the timer for the module
+          await apiService.post(`/api/modules/${moduleId}/start-timer`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (firstError) {
+          try {
+            console.log(`Retrying with alternate path for module: ${moduleId}`);
+            // Try alternate path
+            await apiService.post(`/modules/${moduleId}/start-timer`, {}, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch (secondError) {
+            console.log(`Both timer API paths failed, will not retry for this session: ${secondError.message}`);
+            // If both paths fail, don't try anymore for this session
+            setShouldSkipApiCalls(true);
+            throw secondError;
           }
-        } catch (error) {
-          console.error(`Timer API call failed: ${error.message}`);
-          console.error('Full error details:', error);
-          
-          // If the API call fails, don't try anymore for this session
-          setShouldSkipApiCalls(true);
-          
-          // We'll continue the user experience even if the timer fails
-          if (isMounted) {
-            setTimerStarted(true); // Pretend it worked so the UX isn't affected
-          }
+        }
+        
+        if (isMounted) {
+          setTimerStarted(true);
+          console.log(`Started timer for module: ${moduleId}`);
+        }
+      } catch (err) {
+        console.error("Error starting module timer:", err);
+        // We'll continue the user experience even if the timer fails
+        if (isMounted) {
+          setTimerStarted(true); // Pretend it worked so the UX isn't affected
         }
       } finally {
         isStartingTimerRef.current = false;
@@ -88,6 +89,10 @@ const useModuleTimer = (moduleId) => {
         // Skip API calls if we previously encountered a problem
         if (shouldSkipApiCalls) {
           console.log(`Skipping timer API calls due to previous errors for module: ${moduleId}`);
+          // Pretend it worked for better UX
+          if (isMounted) {
+            setTimerStarted(false);
+          }
           return;
         }
         
@@ -95,48 +100,45 @@ const useModuleTimer = (moduleId) => {
         if (isStoppingTimerRef.current) return;
         
         // Only stop if user is logged in and timer was started
-        if (!auth.currentUser) {
-          console.log(`⚠️ Cannot stop timer for ${moduleId}: User not logged in`);
-          return;
-        }
-        
-        if (!timerStarted) {
-          console.log(`Timer not started for ${moduleId}, skipping stop request`);
-          return;
-        }
-        
-        if (timerStopped) {
-          console.log(`Timer already stopped for ${moduleId}, skipping stop request`);
-          return;
-        }
+        if (!auth.currentUser || !timerStarted || timerStopped) return;
         
         // Set flags to prevent duplicate calls
         isStoppingTimerRef.current = true;
         timerStopped = true;
         
+        const token = await auth.currentUser.getIdToken();
+        
+        // Try the API paths with and without the /api prefix
         try {
-          console.log(`Stopping timer for module: ${moduleId}`);
-          
-          // Since the apiService now handles token management automatically in its interceptors,
-          // we don't need to explicitly provide the token here
-          await apiService.post(`/api/modules/${moduleId}/stop-timer`, {});
-          console.log(`🔹 Timer stop API call for ${moduleId} completed successfully`);
-          
-          if (isMounted) {
-            setTimerStarted(false);
-            console.log(`Stopped timer for module: ${moduleId}`);
+          console.log(`Attempting to stop timer for module: ${moduleId}`);
+          // Stop the timer for the module
+          await apiService.post(`/api/modules/${moduleId}/stop-timer`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (firstError) {
+          try {
+            console.log(`Retrying with alternate path for module: ${moduleId}`);
+            // Try alternate path
+            await apiService.post(`/modules/${moduleId}/stop-timer`, {}, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } catch (secondError) {
+            console.log(`Both timer API paths failed, will not retry for this session: ${secondError.message}`);
+            // If both paths fail, don't try anymore for this session
+            setShouldSkipApiCalls(true);
+            throw secondError;
           }
-        } catch (error) {
-          console.error(`Timer stop API call failed: ${error.message}`);
-          console.error('Full error details:', error);
-          
-          // If the API call fails, don't try anymore for this session
-          setShouldSkipApiCalls(true);
-          
-          // Even if there was an error, consider the timer stopped on the client side
-          if (isMounted) {
-            setTimerStarted(false);
-          }
+        }
+        
+        if (isMounted) {
+          setTimerStarted(false);
+          console.log(`Stopped timer for module: ${moduleId}`);
+        }
+      } catch (err) {
+        console.error("Error stopping module timer:", err);
+        // Even if there was an error, consider the timer stopped on the client side
+        if (isMounted) {
+          setTimerStarted(false);
         }
       } finally {
         isStoppingTimerRef.current = false;

@@ -6,13 +6,14 @@ import {
   Button,
   Paper,
 } from '@mui/material';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 
 const LightComfortScenario = ({ isDarkMode, themeColors }) => {
   const [loading, setLoading] = useState(false);
   const [intensity, setIntensity] = useState(500);
   const [colorTemp, setColorTemp] = useState(4000);
   const [lightComfortResult, setLightComfortResult] = useState('');
+  const [error, setError] = useState(null);
   
   // Default theme colors if props not provided
   const colors = themeColors || {
@@ -33,15 +34,30 @@ const LightComfortScenario = ({ isDarkMode, themeColors }) => {
   const calculateLightComfort = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/fuzzy-logic/light-comfort', {
-        intensity,
-        color_temp: colorTemp
-      });
-      setLightComfortResult(response.data.result);
-      setLoading(false);
+      setError(null);
+      
+      // Try with api prefix first
+      try {
+        console.log('Attempting to calculate light comfort with /api prefix...');
+        const response = await apiService.post('/api/fuzzy-logic/light-comfort', {
+          intensity,
+          color_temp: colorTemp
+        });
+        setLightComfortResult(response.data.result);
+      } catch (apiError) {
+        console.log('Retrying without /api prefix...');
+        // If first attempt fails, try without api prefix
+        const response = await apiService.post('/fuzzy-logic/light-comfort', {
+          intensity,
+          color_temp: colorTemp
+        });
+        setLightComfortResult(response.data.result);
+      }
     } catch (error) {
       console.error('Error calculating light comfort result:', error);
-      setLightComfortResult('Error calculating result');
+      setError('Could not connect to the backend service. Please try again later.');
+      setLightComfortResult('');
+    } finally {
       setLoading(false);
     }
   };
@@ -95,6 +111,22 @@ const LightComfortScenario = ({ isDarkMode, themeColors }) => {
           <Typography variant="body2" sx={{ display: 'inline-block', width: '33%', textAlign: 'right', color: colors.text.secondary }}>Cool</Typography>
         </Box>
       </Box>
+
+      {error && (
+        <Paper 
+          sx={{ 
+            p: 2, 
+            mb: 3,
+            borderRadius: '8px', 
+            backgroundColor: isDarkMode ? 'rgba(244, 67, 54, 0.1)' : '#ffebee',
+            border: `1px solid ${isDarkMode ? 'rgba(244, 67, 54, 0.3)' : '#ffcdd2'}`
+          }}
+        >
+          <Typography color="error">
+            {error}
+          </Typography>
+        </Paper>
+      )}
 
       <Button 
         variant="contained" 

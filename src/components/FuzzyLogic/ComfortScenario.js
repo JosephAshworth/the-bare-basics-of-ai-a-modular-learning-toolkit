@@ -6,13 +6,14 @@ import {
   Button,
   Paper,
 } from '@mui/material';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 
 const ComfortScenario = ({ isDarkMode, themeColors }) => {
   const [loading, setLoading] = useState(false);
   const [temperature, setTemperature] = useState(25);
   const [humidity, setHumidity] = useState(50);
   const [comfortResult, setComfortResult] = useState('');
+  const [error, setError] = useState(null);
   
   // Default theme colors if props not provided
   const colors = themeColors || {
@@ -33,15 +34,29 @@ const ComfortScenario = ({ isDarkMode, themeColors }) => {
   const calculateComfort = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/fuzzy-logic/comfort', {
-        temperature,
-        humidity
-      });
-      setComfortResult(response.data.result);
-      setLoading(false);
+      setError(null);
+      // Try with api prefix first
+      try {
+        console.log('Attempting to calculate comfort with /api prefix...');
+        const response = await apiService.post('/api/fuzzy-logic/comfort', {
+          temperature,
+          humidity
+        });
+        setComfortResult(response.data.result);
+      } catch (apiError) {
+        console.log('Retrying without /api prefix...');
+        // If first attempt fails, try without api prefix
+        const response = await apiService.post('/fuzzy-logic/comfort', {
+          temperature,
+          humidity
+        });
+        setComfortResult(response.data.result);
+      }
     } catch (error) {
       console.error('Error calculating comfort result:', error);
-      setComfortResult('Error calculating result');
+      setError('Could not connect to the backend service. Please try again later.');
+      setComfortResult('');
+    } finally {
       setLoading(false);
     }
   };
@@ -95,6 +110,22 @@ const ComfortScenario = ({ isDarkMode, themeColors }) => {
           <Typography variant="body2" sx={{ display: 'inline-block', width: '33%', textAlign: 'right', color: colors.text.secondary }}>Humid</Typography>
         </Box>
       </Box>
+
+      {error && (
+        <Paper 
+          sx={{ 
+            p: 2, 
+            mb: 3,
+            borderRadius: '8px', 
+            backgroundColor: isDarkMode ? 'rgba(244, 67, 54, 0.1)' : '#ffebee',
+            border: `1px solid ${isDarkMode ? 'rgba(244, 67, 54, 0.3)' : '#ffcdd2'}`
+          }}
+        >
+          <Typography color="error">
+            {error}
+          </Typography>
+        </Paper>
+      )}
 
       <Button 
         variant="contained" 

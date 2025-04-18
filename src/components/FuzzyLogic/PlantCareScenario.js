@@ -19,7 +19,7 @@ import {
   ListItemText,
   ListItemIcon
 } from '@mui/material';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 // Import icons
 import OpacityIcon from '@mui/icons-material/Opacity';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
@@ -37,6 +37,7 @@ const PlantCareScenario = ({ isDarkMode, themeColors }) => {
   const [plantTemp, setPlantTemp] = useState(22);
   const [plantType, setPlantType] = useState('General');
   const [plantCareResult, setPlantCareResult] = useState(null);
+  const [error, setError] = useState(null);
   
   // Default theme colors if props not provided
   const colors = themeColors || {
@@ -65,17 +66,31 @@ const PlantCareScenario = ({ isDarkMode, themeColors }) => {
   const calculatePlantCare = async () => {
     try {
       setLoading(true);
-      const response = await axios.post('http://localhost:5000/api/fuzzy-logic/plant-care', {
+      setError(null);
+      setPlantCareResult(null);
+      
+      const requestData = {
         soil_moisture: soilMoisture,
         light_level: lightLevel,
         temperature: plantTemp,
         plant_type: plantType
-      });
-      setPlantCareResult(response.data);
-      setLoading(false);
+      };
+      
+      // Try with api prefix first
+      try {
+        console.log('Attempting to calculate plant care with /api prefix...');
+        const response = await apiService.post('/api/fuzzy-logic/plant-care', requestData);
+        setPlantCareResult(response.data);
+      } catch (apiError) {
+        console.log('Retrying without /api prefix...');
+        // If first attempt fails, try without api prefix
+        const response = await apiService.post('/fuzzy-logic/plant-care', requestData);
+        setPlantCareResult(response.data);
+      }
     } catch (error) {
       console.error('Error calculating plant care recommendations:', error);
-      setPlantCareResult({ error: 'Error calculating recommendations' });
+      setError('Could not connect to the backend service. Please try again later.');
+    } finally {
       setLoading(false);
     }
   };
@@ -212,6 +227,22 @@ const PlantCareScenario = ({ isDarkMode, themeColors }) => {
                 </Select>
               </FormControl>
             </Box>
+            
+            {error && (
+              <Paper 
+                sx={{ 
+                  p: 2, 
+                  mb: 3,
+                  borderRadius: '8px', 
+                  backgroundColor: isDarkMode ? 'rgba(244, 67, 54, 0.1)' : '#ffebee',
+                  border: `1px solid ${isDarkMode ? 'rgba(244, 67, 54, 0.3)' : '#ffcdd2'}`
+                }}
+              >
+                <Typography color="error">
+                  {error}
+                </Typography>
+              </Paper>
+            )}
             
             <Button 
               variant="contained" 

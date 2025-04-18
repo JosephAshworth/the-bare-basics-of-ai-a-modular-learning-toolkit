@@ -1,6 +1,26 @@
 # Emotion Detector - Deployment Guide
 
-This guide covers the deployment process for both the backend and frontend of the Emotion Detector application on Render.com.
+This guide covers the deployment process for both the backend and frontend of the Emotion Detector application on Render.com. The project is organized into `/frontend` and `/backend` directories.
+
+## Project Structure
+
+```
+emotion-detector/
+├── frontend/               # Frontend React application
+│   ├── src/                # React source code
+│   ├── public/             # Public assets
+│   ├── package.json        # Frontend dependencies
+│   └── ...
+├── backend/                # Backend Flask application
+│   ├── routes/             # API routes
+│   ├── app.py              # Main application file
+│   ├── run.py              # Server startup script
+│   ├── render_setup.py     # Setup script for Render
+│   ├── requirements.txt    # Python dependencies
+│   └── ...
+├── render.yaml             # Main Render configuration file
+└── DEPLOYMENT_README.md    # This file
+```
 
 ## Backend Deployment
 
@@ -24,6 +44,7 @@ This guide covers the deployment process for both the backend and frontend of th
    - Environment: `Python`
    - Region: Select the region closest to your users
    - Branch: Your main/production branch
+   - Root Directory: `backend` (important!)
    - Build Command: `pip install -r requirements.txt && python render_setup.py`
    - Start Command: `gunicorn run:app -b 0.0.0.0:$PORT`
 
@@ -78,6 +99,7 @@ If you encounter issues during deployment:
 
 3. **Configure the Static Site**:
    - Name: `emotion-detector-frontend`
+   - Root Directory: `frontend` (important!)
    - Build Command: `npm install && npm run build`
    - Publish Directory: `build`
    - Environment Variables:
@@ -111,6 +133,17 @@ Ensure that:
        "https://*.onrender.com"
    ])
    ```
+
+## Using render.yaml for Deployment
+
+Alternatively, you can use the `render.yaml` file at the root of the repository for automatic deployment of both services:
+
+1. Go to Render Dashboard > Blueprints
+2. Connect your repository
+3. Render will detect the `render.yaml` file and offer to deploy all services
+4. Review the configuration and click "Apply"
+
+This will deploy both the frontend and backend services according to the configuration in the `render.yaml` file.
 
 ## Debugging Cross-Origin Issues
 

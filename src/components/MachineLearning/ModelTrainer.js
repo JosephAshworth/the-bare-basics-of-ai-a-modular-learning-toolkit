@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Button, CircularProgress } from '@mui/material';
-import { trainModel, fetchTreeExplanation, cleanupFiles } from './ApiService';
+import { Button, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { trainModel, fetchTreeExplanation, cleanupFiles, testCORS } from './ApiService';
 
 /**
  * Component for handling model training
@@ -14,15 +14,27 @@ const ModelTrainer = ({
   const [loading, setLoading] = useState(false);
   const [modelPath, setModelPath] = useState(null);
   const [explainerPath, setExplainerPath] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showError, setShowError] = useState(false);
 
   /**
    * Train a machine learning model with the given parameters
    */
   const handleTrainModel = async () => {
     setLoading(true);
+    setErrorMessage('');
+    setShowError(false);
     onTrainingStart?.();
 
     try {
+      // First perform a CORS test to check connectivity
+      try {
+        await testCORS();
+        console.log('✅ CORS pre-check passed');
+      } catch (corsError) {
+        console.warn('⚠️ CORS pre-check failed, but continuing with training attempt:', corsError);
+      }
+      
       const result = await trainModel(trainingParams);
       
       // Set model and explainer paths if they're in the response
@@ -44,6 +56,7 @@ const ModelTrainer = ({
         try {
           const explanationParams = {
             model_path: result.model_path,
+            explainer_path: result.explainer_path || '',
             features: trainingParams.selectedFeatures && trainingParams.selectedFeatures.length > 0 
               ? trainingParams.selectedFeatures 
               : trainingParams.features,
@@ -60,10 +73,21 @@ const ModelTrainer = ({
       }
     } catch (err) {
       console.error('API Error:', err);
+      
+      // Set local error state for the Snackbar
+      setErrorMessage(err.message || 'Failed to communicate with the server');
+      setShowError(true);
+      
+      // Notify parent component
       onTrainingError?.(err.message || 'Failed to communicate with the server');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle closing the error Snackbar
+  const handleCloseError = () => {
+    setShowError(false);
   };
 
   // Cleanup function to remove temporary files
@@ -79,15 +103,34 @@ const ModelTrainer = ({
   }, [modelPath, explainerPath]);
 
   return (
-    <Button
-      variant="contained"
-      startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-      onClick={handleTrainModel}
-      disabled={loading || !trainingParams}
-      fullWidth
-    >
-      {loading ? 'Training Model...' : 'Train Model'}
-    </Button>
+    <>
+      <Button
+        variant="contained"
+        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+        onClick={handleTrainModel}
+        disabled={loading || !trainingParams}
+        fullWidth
+      >
+        {loading ? 'Training Model...' : 'Train Model'}
+      </Button>
+      
+      {/* Error Snackbar */}
+      <Snackbar 
+        open={showError} 
+        autoHideDuration={6000} 
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

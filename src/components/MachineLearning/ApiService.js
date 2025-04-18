@@ -22,11 +22,67 @@ const ApiService = () => {
 export const trainModel = async (params) => {
   try {
     console.log('🧠 Sending model training request with params:', params);
-    const response = await apiService.post('/api/train-model', params);
+    
+    // Add additional headers to help with CORS
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      withCredentials: false // Set to false to avoid preflight complexity
+    };
+    
+    const response = await apiService.post('/api/train-model', params, config);
     return response.data;
   } catch (error) {
     console.error('❌ Model training error:', error);
+    
+    // Check specifically for CORS errors
+    if (error.message && (
+        error.message.includes('CORS') || 
+        error.message.includes('Access-Control-Allow-Origin') ||
+        error.message.includes('cross-origin')
+      )) {
+      console.error('🚫 CORS error detected:', error.message);
+      
+      // Try the CORS test endpoint as a fallback
+      try {
+        console.log('🔄 Trying CORS test endpoint...');
+        const testResponse = await testCORS();
+        console.log('✅ CORS test endpoint response:', testResponse);
+      } catch (corsTestError) {
+        console.error('❌ CORS test endpoint also failed:', corsTestError);
+      }
+      
+      throw new Error('CORS error: The server is rejecting cross-origin requests. Please check your browser console for details.');
+    }
+    
     throw new Error(error.response?.data?.error || 'An error occurred while training the model');
+  }
+};
+
+/**
+ * Test CORS configuration with a simple endpoint
+ * 
+ * @returns {Promise<Object>} API response
+ */
+export const testCORS = async () => {
+  try {
+    console.log('🧪 Testing CORS configuration...');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      withCredentials: false
+    };
+    const response = await apiService.get('/api/train-model/cors-test', config);
+    return response.data;
+  } catch (error) {
+    console.error('❌ CORS test error:', error);
+    throw error;
   }
 };
 

@@ -11,6 +11,12 @@ console.log(`📡 API Service initialized with backend URL: ${backendUrl}`);
 const apiInstance = axios.create({
   baseURL: backendUrl,
   timeout: 30000, // 30 seconds
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  },
+  withCredentials: false // Set to false to avoid CORS preflight complexity
 });
 
 // Helper function to get the best available auth token
@@ -86,7 +92,7 @@ apiInstance.interceptors.request.use(
   }
 );
 
-// Add response interceptor for logging
+// Response interceptor with improved CORS error handling
 apiInstance.interceptors.response.use(
   (response) => {
     console.log(`✅ API Response: ${response.status}`, response.data);
@@ -116,6 +122,33 @@ apiInstance.interceptors.response.use(
         } catch (refreshError) {
           console.error('❌ Failed to refresh token:', refreshError);
         }
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('❌ No response received:', error.request);
+      
+      // Check for CORS errors
+      if (error.message && (
+        error.message.includes('CORS') || 
+        error.message.includes('Access-Control-Allow-Origin') ||
+        error.message.includes('cross-origin')
+      )) {
+        console.error('🚫 CORS error detected:', error.message);
+        
+        // Enhance the error for better debugging
+        error.isCorsError = true;
+        error.message = `CORS Error: ${error.message}. Server: ${backendUrl}`;
+        
+        // Add CORS debugging information
+        error.corsDebugInfo = {
+          url: error.config.url,
+          baseURL: backendUrl,
+          fullURL: `${backendUrl}${error.config.url}`,
+          method: error.config.method?.toUpperCase(),
+          headers: error.config.headers
+        };
+        
+        console.error('🚫 CORS Debug Info:', error.corsDebugInfo);
       }
     } else {
       console.error('❌ Network Error:', error.message);

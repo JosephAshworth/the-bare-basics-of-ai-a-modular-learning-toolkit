@@ -35,26 +35,33 @@ def setup_models():
         logger.error(f"Models not found in {models_dir}")
         return False
     
-    # Create a symbolic link to ensure the models are accessible
+    # Copy models to the expected location (no symlinks)
     try:
-        # First, try to symlink directly
-        if os.path.exists(render_models_dir) and not os.path.islink(render_models_dir):
-            logger.info(f"Creating symlink from {models_dir} to {render_models_dir}")
-            if os.path.isdir(render_models_dir):
-                shutil.rmtree(render_models_dir)
-            os.symlink(models_dir, render_models_dir)
-        # If that fails, try to copy the models
-        if not os.path.exists(render_models_dir) or not os.listdir(render_models_dir):
-            logger.info(f"Copying models from {models_dir} to {render_models_dir}")
-            for item in os.listdir(models_dir):
-                s = os.path.join(models_dir, item)
-                d = os.path.join(render_models_dir, item)
-                if os.path.isdir(s):
-                    shutil.copytree(s, d, dirs_exist_ok=True)
+        logger.info(f"Copying models from {models_dir} to {render_models_dir}")
+        
+        # First clear the destination directory if it exists
+        if os.path.exists(render_models_dir):
+            logger.info(f"Clearing existing directory: {render_models_dir}")
+            for item in os.listdir(render_models_dir):
+                item_path = os.path.join(render_models_dir, item)
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
                 else:
-                    shutil.copy2(s, d)
+                    os.remove(item_path)
+        
+        # Copy all files and directories from source to destination
+        for item in os.listdir(models_dir):
+            s = os.path.join(models_dir, item)
+            d = os.path.join(render_models_dir, item)
+            logger.info(f"Copying {s} to {d}")
+            if os.path.isdir(s):
+                shutil.copytree(s, d, dirs_exist_ok=True)
+            else:
+                shutil.copy2(s, d)
+                
+        logger.info(f"Models copied successfully to {render_models_dir}")
     except Exception as e:
-        logger.error(f"Error setting up model paths: {e}")
+        logger.error(f"Error copying models: {e}")
         return False
     
     logger.info("Model setup completed successfully")

@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('Agg')  # Must be before any matplotlib.pyplot import
 import matplotlib.pyplot as plt
 
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 import joblib
 
 from sklearn.datasets import load_iris
@@ -29,6 +29,13 @@ logger = logging.getLogger("emotion_detector")
 class ModelError(Exception):
     """Custom exception for model-related errors"""
     pass
+
+def add_cors_headers(response):
+    """Add CORS headers to the response"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 def validate_input_data(data):
     """Validate input data structure and required fields"""
@@ -360,8 +367,16 @@ def create_confusion_matrix(model, X, y, class_names=None):
         return None
 
 def train_model():
+    """Model training endpoint"""
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         data = request.json
+        logger.info("Starting model training with parameters")
+        logger.info(f"Request body: {data}")
         print("\n=== Starting Model Training ===")
         
         # Validate input data structure
@@ -761,28 +776,44 @@ def train_model():
         try:
             response_data = json.loads(json.dumps(response_data, cls=NumpyEncoder))
         except Exception as e:
-            print(f"Error encoding response data: {str(e)}")
-            traceback.print_exc()
-            return jsonify({'error': 'Error encoding response data'}), 500
+            logger.error(f"Error encoding response data: {str(e)}")
+            logger.error(traceback.format_exc())
+            return add_cors_headers(jsonify({'error': 'Error encoding response data', 'details': str(e)})), 500
         
+        logger.info("Model training completed successfully")
         print("\n=== Model Training Complete ===")
-        print(f"Response includes visualization: {'visualization' in response_data}")
         
-        return jsonify(response_data)
+        # Return response with CORS headers
+        response = jsonify(response_data)
+        return add_cors_headers(response)
         
+    except ModelError as e:
+        # Handle expected model errors
+        logger.warning(f"Model error: {str(e)}")
+        error_response = jsonify({'error': str(e), 'type': 'ModelError'})
+        return add_cors_headers(error_response), 400
     except Exception as e:
-        print(f"Error in train_model: {str(e)}")
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        # Handle unexpected errors
+        logger.error(f"Error in train_model: {str(e)}")
+        logger.error(traceback.format_exc())
+        error_response = jsonify({'error': str(e), 'type': 'ServerError'})
+        return add_cors_headers(error_response), 500
 
 def explain_tree():
+    """Tree explanation endpoint"""
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         data = request.get_json()
         model_path = data.get('model_path')
         explainer_path = data.get('explainer_path')
         
         if not model_path or not explainer_path:
-            return jsonify({'error': 'Model or explainer path not provided'}), 400
+            error_response = jsonify({'error': 'Model or explainer path not provided'})
+            return add_cors_headers(error_response), 400
             
         # Load the model and explainer
         model = joblib.load(model_path)
@@ -797,15 +828,20 @@ def explain_tree():
         # Create model insights
         insights = create_model_insights(model, None, None, feature_names, 'decision_tree')
         
-        return jsonify({
+        response = jsonify({
             'model_statistics': insights['model_statistics'],
             'key_features': insights['key_features']
         })
+        return add_cors_headers(response)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error in explain_tree: {str(e)}")
+        logger.error(traceback.format_exc())
+        error_response = jsonify({'error': str(e)})
+        return add_cors_headers(error_response), 500
 
 def register_model_training_routes(app):
     """Register all model training routes with the app"""
-    app.route('/api/train-model', methods=['POST'])(train_model)
-    app.route('/api/explain-tree', methods=['POST'])(explain_tree) 
+    # Add route with additional methods to handle OPTIONS requests
+    app.route('/api/train-model', methods=['POST', 'OPTIONS'])(train_model)
+    app.route('/api/explain-tree', methods=['POST', 'OPTIONS'])(explain_tree) 

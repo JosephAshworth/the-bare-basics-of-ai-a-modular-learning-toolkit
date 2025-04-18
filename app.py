@@ -12,29 +12,38 @@ import json
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved_models")
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs("debug", exist_ok=True)
+os.makedirs("logs", exist_ok=True)  # Ensure logs directory exists
 
 # Initialize Flask app
 app = Flask(__name__)
 
 @app.route("/", methods=["HEAD", "GET"])
 def index():
-    return {"status": "ok", "message": "Emotion Detector API is running"}, 200
+    # Log server info including port
+    port = os.environ.get('PORT', 5000)
+    app.logger.info(f"Server running on port {port}")
+    app.logger.info(f"Request headers: {dict(request.headers)}")
+    return {"status": "ok", "message": "Emotion Detector API is running", "port": port}, 200
 
 # Increase the maximum content length to 16MB
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-# Enable CORS for all routes - this is more reliable than resource-specific CORS
-CORS(app, origins=[
-    "http://localhost:3000", 
-    "http://127.0.0.1:3000", 
-    "http://localhost:5173",
-    # Add your Render frontend URL when deployed
-    "https://emotion-detector-frontend.onrender.com",
-    # Add a wildcard for all Render domains if needed
-    "https://*.onrender.com"
-], 
-methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-allow_headers=["Content-Type", "Authorization"],
-supports_credentials=True)
+
+# CORS configuration - More permissive during troubleshooting
+CORS(app, 
+    # Allow all origins during debugging
+    origins="*",
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    expose_headers=["Content-Length", "Content-Type"],
+    supports_credentials=True,
+    max_age=3600
+)
+
+# Log CORS settings
+app.logger.info("CORS configured with the following settings:")
+app.logger.info(f"  Origins: * (all origins allowed)")
+app.logger.info(f"  Methods: {['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']}")
+app.logger.info(f"  Headers: {['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']}")
 
 # Configure Flask and Werkzeug logging
 import logging.config
@@ -58,7 +67,7 @@ def load_firebase_credentials():
 def configure_logging():
     # Configure Flask logging
     flask_logger = logging.getLogger('flask')
-    flask_logger.setLevel(logging.ERROR)  # Only show flask errors
+    flask_logger.setLevel(logging.INFO)  # Show more flask logs
     
     # Configure Werkzeug logging (this handles the request logs)
     werkzeug_logger = logging.getLogger('werkzeug')
@@ -66,10 +75,11 @@ def configure_logging():
     
     # Configure our app logging
     app_logger = logging.getLogger("emotion_detector")
-    app_logger.setLevel(logging.INFO)
+    app_logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all logs
     
     # Create file handler with detailed logs for the file
-    file_handler = logging.FileHandler("emotion_detector.log")
+    log_file_path = os.path.join("logs", "emotion_detector.log")
+    file_handler = logging.FileHandler(log_file_path)
     file_handler.setLevel(logging.DEBUG)
     file_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_format)
@@ -82,7 +92,43 @@ def configure_logging():
     console_handler.setFormatter(console_format)
     app_logger.addHandler(console_handler)
     
+    # Add a request logger
+    app.before_request(log_request_info)
+    
     return app_logger
+
+# Log details about incoming requests
+def log_request_info():
+    logger.debug('Request Headers: %s', dict(request.headers))
+    logger.debug('Request Body: %s', request.get_data())
+    logger.debug('Request Path: %s', request.path)
+    logger.debug('Request Method: %s', request.method)
+    logger.debug('Request Origin: %s', request.headers.get('Origin', 'No origin header'))
+    logger.debug('Request IP: %s', request.remote_addr)
+
+# Global error handler for all routes
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Log the error
+    logger.error(f"Unhandled exception: {str(e)}")
+    logger.error(traceback.format_exc())
+    
+    # Return a generic error response
+    response = {
+        "error": "An internal server error occurred",
+        "message": str(e),
+        "status": "error",
+        "timestamp": str(datetime.datetime.now())
+    }
+    
+    # Add CORS headers directly to the response for error cases
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+    }
+    
+    return response, 500, headers
 
 # Set up logging
 logger = configure_logging()
@@ -95,6 +141,11 @@ from routes.fuzzy_logic import register_fuzzy_logic_routes
 from routes.auth import register_auth_routes, firebase_initialized, db
 from routes.modules import register_module_routes, module_routes, AVAILABLE_MODULES
 
+# Log environment information
+logger.info(f"Starting server with PORT: {os.environ.get('PORT', '5000 (default)')}")
+logger.info(f"Running in DEBUG mode: {os.environ.get('DEBUG', 'False')}")
+logger.info(f"CORS origins configured: {app.config.get('CORS_ORIGINS', 'Default CORS settings')}")
+
 # Register all routes with the app
 register_emotion_routes(app)
 register_model_training_routes(app)
@@ -102,6 +153,18 @@ register_dataset_routes(app)
 register_fuzzy_logic_routes(app)
 register_auth_routes(app)
 register_module_routes(app)
+
+# Add CORS preflight handling for all routes
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def handle_preflight(path):
+    response = app.make_default_options_response()
+    # Add CORS headers manually to ensure they're always present
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+    response.headers['Access-Control-Max-Age'] = '3600'
+    return response
 
 # Add debug route to check all registered routes
 @app.route("/debug/routes", methods=["GET"])
@@ -114,6 +177,56 @@ def list_routes():
             "path": str(rule)
         })
     return {"routes": routes}, 200
+
+# Add debug endpoint to check request details
+@app.route("/debug/request", methods=["GET", "POST"])
+def debug_request():
+    """Endpoint to debug request details"""
+    request_data = {
+        "headers": dict(request.headers),
+        "method": request.method,
+        "url": request.url,
+        "path": request.path,
+        "args": request.args.to_dict(),
+        "form": request.form.to_dict() if request.form else None,
+        "json": request.json if request.is_json else None,
+        "cookies": request.cookies,
+        "remote_addr": request.remote_addr,
+        "server_port": os.environ.get("PORT", 5000)
+    }
+    logger.info(f"Debug request received: {json.dumps(request_data, indent=2)}")
+    return request_data, 200
+
+# Add CORS test endpoint
+@app.route("/debug/cors-test", methods=["GET", "POST", "OPTIONS"])
+def cors_test():
+    """Endpoint to test CORS configuration"""
+    if request.method == "OPTIONS":
+        # Handle preflight request
+        response = app.make_default_options_response()
+    else:
+        # Handle actual request
+        response = {
+            "status": "success",
+            "message": "CORS test successful",
+            "request": {
+                "method": request.method,
+                "headers": dict(request.headers),
+                "origin": request.headers.get("Origin", "No origin")
+            },
+            "timestamp": str(datetime.datetime.now())
+        }
+        response = app.response_class(
+            response=json.dumps(response),
+            status=200,
+            mimetype='application/json'
+        )
+    
+    # Add CORS headers explicitly
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, Origin'
+    return response
 
 # Firebase status endpoint
 @app.route("/firebase_status", methods=["GET"])

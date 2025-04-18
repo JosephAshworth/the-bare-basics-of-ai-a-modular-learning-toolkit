@@ -3,7 +3,7 @@ import io
 import base64
 import traceback
 import logging
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 from werkzeug.utils import secure_filename
 from PIL import Image
 import librosa
@@ -31,6 +31,14 @@ text_tokenizer = None
 text_model = None
 audio_extractor = None
 audio_model = None
+
+# Helper function to add CORS headers to all responses
+def add_cors_headers(response):
+    """Add CORS headers to the response"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept,Origin')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 def load_models():
     """Load all emotion detection models"""
@@ -103,6 +111,12 @@ def load_models():
 load_models()
 
 def detect_emotion():
+    """Detect emotions in a face image"""
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         request_id = base64.b64encode(os.urandom(6)).decode('ascii')  # Generate a unique ID for this request
         logger.info(f"[{request_id}] Starting emotion detection")
@@ -110,7 +124,8 @@ def detect_emotion():
         # Get the image from request
         if 'image' not in request.files and 'image' not in request.json:
             logger.warning(f"[{request_id}] No image provided in request")
-            return jsonify({'error': 'No image provided'}), 400
+            response = jsonify({'error': 'No image provided'})
+            return add_cors_headers(response), 400
         
         # Handle both file upload and base64 encoded image
         try:
@@ -227,7 +242,19 @@ def detect_emotion():
                     logger.warning(f"[{request_id}] No emotions detected")
                     return jsonify({'error': 'No emotions detected in this image'}), 200
                 
-                return jsonify({'predictions': predictions})
+                # Get dominant emotion
+                dominant_emotion = predictions[0]['emotion']
+                
+                # Return results
+                result = {
+                    'predictions': predictions,
+                    'dominant_emotion': dominant_emotion,
+                    'request_id': request_id
+                }
+                
+                logger.info(f"[{request_id}] Emotion detection completed successfully")
+                response = jsonify(result)
+                return add_cors_headers(response)
                 
             except Exception as process_error:
                 logger.error(f"[{request_id}] Error processing predictions: {str(process_error)}")
@@ -247,11 +274,18 @@ def detect_emotion():
             return jsonify({'error': f'Error analyzing image: {str(predict_error)}'}), 500
         
     except Exception as e:
-        logger.error(f"Unhandled error in emotion detection: {str(e)}")
+        logger.error(f"[{request_id if 'request_id' in locals() else 'unknown'}] Unhandled error in emotion detection: {str(e)}")
         logger.error(traceback.format_exc())
-        return jsonify({'error': f'Detection failed: {str(e)}'}), 500
+        response = jsonify({'error': f'Detection failed: {str(e)}'})
+        return add_cors_headers(response), 500
 
 def detect_text_emotion():
+    """Detect emotions in text"""
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         request_id = base64.b64encode(os.urandom(6)).decode('ascii')  # Generate a unique ID for this request
         logger.info(f"[{request_id}] Starting text emotion detection")
@@ -313,7 +347,19 @@ def detect_text_emotion():
                     logger.warning(f"[{request_id}] No emotions detected")
                     return jsonify({'error': 'No emotions detected in this text'}), 200
                 
-                return jsonify({'predictions': predictions})
+                # Get dominant emotion
+                dominant_emotion = predictions[0]['emotion']
+                
+                # Return results
+                result = {
+                    'predictions': predictions,
+                    'dominant_emotion': dominant_emotion,
+                    'request_id': request_id
+                }
+                
+                logger.info("Text emotion detection completed successfully")
+                response = jsonify(result)
+                return add_cors_headers(response)
                 
             except Exception as process_error:
                 logger.error(f"[{request_id}] Error processing predictions: {str(process_error)}")
@@ -335,9 +381,16 @@ def detect_text_emotion():
     except Exception as e:
         logger.error(f"Unhandled error in text emotion detection: {str(e)}")
         logger.error(traceback.format_exc())
-        return jsonify({'error': f'Detection failed: {str(e)}'}), 500
+        response = jsonify({'error': f'Detection failed: {str(e)}'})
+        return add_cors_headers(response), 500
 
 def detect_audio_emotion():
+    """Detect emotions in audio"""
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == 'OPTIONS':
+        response = make_response()
+        return add_cors_headers(response)
+        
     try:
         request_id = base64.b64encode(os.urandom(6)).decode('ascii')  # Generate a unique ID for this request
         logger.info(f"[{request_id}] Starting audio emotion detection")
@@ -436,7 +489,19 @@ def detect_audio_emotion():
                 logger.warning(f"[{request_id}] No emotions detected")
                 return jsonify({'error': 'No emotions detected in this audio'}), 200
             
-            return jsonify({'predictions': predictions})
+            # Get dominant emotion
+            dominant_emotion = predictions[0]['emotion']
+            
+            # Return results
+            result = {
+                'predictions': predictions,
+                'dominant_emotion': dominant_emotion,
+                'request_id': request_id
+            }
+            
+            logger.info("Audio emotion detection completed successfully")
+            response = jsonify(result)
+            return add_cors_headers(response)
             
         except Exception as predict_error:
             logger.error(f"[{request_id}] Error predicting audio emotions: {str(predict_error)}")
@@ -451,10 +516,11 @@ def detect_audio_emotion():
     except Exception as e:
         logger.error(f"Unhandled error in audio emotion detection: {str(e)}")
         logger.error(traceback.format_exc())
-        return jsonify({'error': f'Detection failed: {str(e)}'}), 500
+        response = jsonify({'error': f'Detection failed: {str(e)}'})
+        return add_cors_headers(response), 500
 
 def register_emotion_routes(app):
     """Register all emotion detection routes with the app"""
-    app.route('/api/detect-emotion', methods=['POST'])(detect_emotion)
-    app.route('/api/detect-text-emotion', methods=['POST'])(detect_text_emotion)
-    app.route('/api/detect-audio-emotion', methods=['POST'])(detect_audio_emotion) 
+    app.route('/api/detect-emotion', methods=['POST', 'OPTIONS'])(detect_emotion)
+    app.route('/api/detect-text-emotion', methods=['POST', 'OPTIONS'])(detect_text_emotion)
+    app.route('/api/detect-audio-emotion', methods=['POST', 'OPTIONS'])(detect_audio_emotion) 

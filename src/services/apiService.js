@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { auth } from '../firebase';
 
-// Get the base URL from environment variables or default to localhost
-const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+// Get the base URL from environment variables or default to the deployed backend
+const backendUrl = process.env.REACT_APP_BACKEND_URL || 'https://emotion-detector-backend-test.onrender.com';
 
 // Log the backend URL being used
 console.log(`📡 API Service initialized with backend URL: ${backendUrl}`);
@@ -173,6 +173,11 @@ const apiService = {
     const url = `${backendUrl}${endpoint}`;
     console.log(`🔗 Full URL: ${url}`);
     return url;
+  },
+  
+  // Alias method for getFullUrl for backward compatibility
+  getUrl: (endpoint) => {
+    return apiService.getFullUrl(endpoint);
   },
   
   // Special method for fuzzy logic endpoints that tries multiple path formats

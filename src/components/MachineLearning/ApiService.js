@@ -1,4 +1,5 @@
 import React from 'react';
+import apiService from '../../services/apiService';
 
 /**
  * API Service component providing API-related functionality
@@ -9,8 +10,8 @@ const ApiService = () => {
   return null; // This component doesn't render anything
 };
 
-// API base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+// We don't need this since we're using the centralized apiService
+// const API_BASE_URL = apiService.getUrl('/api');
 
 /**
  * Train a machine learning model with the provided parameters
@@ -19,21 +20,14 @@ const API_BASE_URL = 'http://localhost:5000/api';
  * @returns {Promise<Object>} API response
  */
 export const trainModel = async (params) => {
-  const response = await fetch(`${API_BASE_URL}/train-model`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  });
-  
-  const result = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(result.error || 'An error occurred while training the model');
+  try {
+    console.log('🧠 Sending model training request with params:', params);
+    const response = await apiService.post('/api/train-model', params);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Model training error:', error);
+    throw new Error(error.response?.data?.error || 'An error occurred while training the model');
   }
-  
-  return result;
 };
 
 /**
@@ -43,21 +37,14 @@ export const trainModel = async (params) => {
  * @returns {Promise<Object>} API response
  */
 export const fetchTreeExplanation = async (params) => {
-  const response = await fetch(`${API_BASE_URL}/explain-tree`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  });
-  
-  const result = await response.json();
-  
-  if (!response.ok) {
-    throw new Error(result.error || 'An error occurred while fetching explanations');
+  try {
+    console.log('🔍 Requesting tree explanation with params:', params);
+    const response = await apiService.post('/api/explain-tree', params);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Tree explanation error:', error);
+    throw new Error(error.response?.data?.error || 'An error occurred while fetching explanations');
   }
-  
-  return result;
 };
 
 /**
@@ -68,13 +55,8 @@ export const fetchTreeExplanation = async (params) => {
  */
 export const cleanupFiles = async (params) => {
   try {
-    await fetch(`${API_BASE_URL}/cleanup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    });
+    console.log('🧹 Cleaning up files with params:', params);
+    await apiService.post('/api/cleanup', params);
   } catch (err) {
     console.error('Error cleaning up files:', err);
   }
@@ -93,7 +75,7 @@ export const cleanupFiles = async (params) => {
  */
 export const uploadCSVFile = async (file, columnsToDiscard = []) => {
   try {
-    console.log('Uploading CSV file to server for processing:', file.name);
+    console.log('📤 Uploading CSV file to server for processing:', file.name);
     console.log('Columns to discard:', columnsToDiscard);
     
     // Create a FormData object to send the file
@@ -105,21 +87,11 @@ export const uploadCSVFile = async (file, columnsToDiscard = []) => {
       formData.append('columns_to_drop', columnsToDiscard.join(','));
     }
     
-    // Make the API call to the backend
-    const response = await fetch(`${API_BASE_URL}/process-csv`, {
-      method: 'POST',
-      body: formData
-    });
+    // Make the API call to the backend using apiService
+    const response = await apiService.uploadFile('/api/process-csv', formData);
     
-    // If the response is not OK, handle the error
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Server error:', errorData);
-      throw new Error(errorData.error || `Server error: ${response.status}`);
-    }
-    
-    // Parse the response JSON
-    const result = await response.json();
+    // Parse the response data
+    const result = response.data;
     
     // Validate the result
     if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
@@ -127,7 +99,7 @@ export const uploadCSVFile = async (file, columnsToDiscard = []) => {
       throw new Error('No valid data found in the uploaded file');
     }
     
-    console.log('Server successfully processed CSV file with:', {
+    console.log('✅ Server successfully processed CSV file with:', {
       rows: result.data.length,
       features: result.features,
       suitableTargets: result.suitable_targets || [],
@@ -137,7 +109,7 @@ export const uploadCSVFile = async (file, columnsToDiscard = []) => {
     
     return result;
   } catch (error) {
-    console.error('Error processing CSV file:', error);
+    console.error('❌ Error processing CSV file:', error);
     // Re-throw the error for the component to handle
     throw error;
   }

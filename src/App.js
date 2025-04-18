@@ -22,6 +22,9 @@ import { useThemeContext } from './context/ThemeContext';
 // Import the AdminToolsPage
 import AdminToolsPage from './pages/AdminToolsPage';
 
+// Import API Debugger
+import APIDebugger from './components/APIDebugger';
+
 // Protected route wrapper
 const ProtectedRoute = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -130,6 +133,13 @@ function App() {
                 <AdminToolsPage />
               </ProtectedRoute>
             } />
+            <Route path="/debug" element={
+              <ProtectedRoute>
+                <APIDebugger />
+              </ProtectedRoute>
+            } />
+            {/* Add an unprotected debug route for deployment troubleshooting */}
+            <Route path="/api-debug" element={<APIDebugger />} />
           </Routes>
         </main>
         <Footer />

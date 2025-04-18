@@ -13,7 +13,7 @@ import {
   Link
 } from '@mui/material';
 import { CheckCircle, CheckCircleOutline, AccessTime, Refresh, ChevronRight } from '@mui/icons-material';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 import { Link as RouterLink } from 'react-router-dom';
 import { auth, checkFirebaseConnection, firebaseInitialized } from '../../firebase';
 import { useThemeContext } from '../../context/ThemeContext';
@@ -65,7 +65,7 @@ const ModuleTracker = () => {
       console.log('Authentication token obtained successfully');
       
       // Request module progress from the server
-      const response = await axios.get('/api/modules/progress', {
+      const response = await apiService.get('/modules/progress', {
         headers: {
           Authorization: `Bearer ${token}`
         }

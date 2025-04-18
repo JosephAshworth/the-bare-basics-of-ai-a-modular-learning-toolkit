@@ -3,7 +3,7 @@ import { auth } from '../../firebase';
 import { doc, getDoc, updateDoc, deleteDoc, getFirestore } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 
 const UserProfile = () => {
   const [user, setUser] = useState(null);
@@ -27,7 +27,7 @@ const UserProfile = () => {
     setModuleLoading(true);
     try {
       console.log('Fetching module progress...');
-      const moduleResponse = await axios.get('/api/modules/progress', {
+      const moduleResponse = await apiService.get('/modules/progress', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -236,7 +236,7 @@ const UserProfile = () => {
       const token = await auth.currentUser.getIdToken();
       
       // Start the timer for the module
-      await axios.post(`/api/modules/${moduleId}/start-timer`, {}, {
+      await apiService.post(`/modules/${moduleId}/start-timer`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -255,7 +255,7 @@ const UserProfile = () => {
       const token = await auth.currentUser.getIdToken();
       
       // Stop the timer for the module
-      await axios.post(`/api/modules/${moduleId}/stop-timer`, {}, {
+      await apiService.post(`/modules/${moduleId}/stop-timer`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -298,7 +298,7 @@ const UserProfile = () => {
       
       // Call backend to delete user data
       try {
-        await axios.post('/api/auth/delete-account', {}, {
+        await apiService.post('/auth/delete-account', {}, {
           headers: {
             Authorization: `Bearer ${token}`
           }

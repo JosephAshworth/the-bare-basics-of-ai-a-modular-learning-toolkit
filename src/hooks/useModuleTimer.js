@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { auth } from '../firebase';
-import axios from 'axios';
+import apiService from '../services/apiService';
 
 /**
  * Custom hook to track time spent on module pages
@@ -37,7 +37,7 @@ const useModuleTimer = (moduleId) => {
         const token = await auth.currentUser.getIdToken();
         
         // Start the timer for the module
-        await axios.post(`/api/modules/${moduleId}/start-timer`, {}, {
+        await apiService.post(`/modules/${moduleId}/start-timer`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -67,7 +67,7 @@ const useModuleTimer = (moduleId) => {
         const token = await auth.currentUser.getIdToken();
         
         // Stop the timer for the module
-        await axios.post(`/api/modules/${moduleId}/stop-timer`, {}, {
+        await apiService.post(`/modules/${moduleId}/stop-timer`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
         

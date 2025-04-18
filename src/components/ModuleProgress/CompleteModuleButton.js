@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button, CircularProgress, Snackbar, Alert } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 import { auth } from '../../firebase';
 
 const CompleteModuleButton = ({ moduleId, moduleName }) => {
@@ -34,7 +34,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       const token = await currentUser.getIdToken();
       
       console.log(`Checking status for module: ${moduleId}`);
-      const response = await axios.get('/api/modules/progress', {
+      const response = await apiService.get('/modules/progress', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -80,7 +80,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       console.log(`Using endpoint: ${endpoint} (fallback: ${useFallbackEndpoint})`);
       
       // Send the update to the server
-      await axios.post(endpoint, 
+      await apiService.post(endpoint, 
         { completed: newCompleted },
         {
           headers: {
@@ -98,7 +98,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
     } catch (err) {
       console.error('Error updating module completion:', err);
       
-      // If we haven't tried the fallback yet and got a 404 error, try the fallback
+      // If we haven't tried the fallback yet and got a 404 error, try the fallback endpoint
       if (!useFallbackEndpoint && err.response && err.response.status === 404) {
         console.log('Main endpoint failed with 404, trying fallback endpoint...');
         setUseFallbackEndpoint(true);

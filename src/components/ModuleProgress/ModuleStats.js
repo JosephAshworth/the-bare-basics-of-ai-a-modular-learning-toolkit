@@ -13,7 +13,7 @@ import {
   TableRow,
   LinearProgress
 } from '@mui/material';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 import { auth } from '../../firebase';
 import { useThemeContext } from '../../context/ThemeContext';
 
@@ -31,7 +31,7 @@ const ModuleStats = () => {
       
       try {
         const token = await auth.currentUser.getIdToken();
-        const response = await axios.get('/api/modules/stats', {
+        const response = await apiService.get('/modules/stats', {
           headers: {
             Authorization: `Bearer ${token}`
           }

@@ -96,7 +96,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       }
       
       // Get the authentication token
-      const token = await currentUser.getIdToken();
+      const token = await auth.currentUser.getIdToken();
       
       // Determine which endpoint to use
       let endpoint = useFallbackEndpoint 

@@ -1,10 +1,14 @@
 services:
   - type: web
-    name: the-bare-basics-of-ai
+    name: emotion-detector-backend
     env: python
-    buildCommand: pip install -r requirements.txt && chmod +x predeploy.sh && ./predeploy.sh
-    startCommand: gunicorn app:app
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
-    autoDeploy: true 
+        value: 3.10.0
+      - key: PORT
+        value: 10000
+    healthCheckPath: / 

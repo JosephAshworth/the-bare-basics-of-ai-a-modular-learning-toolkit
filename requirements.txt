@@ -4,9 +4,16 @@ numpy
 pandas
 scikit-learn
 matplotlib
-torch==2.6.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+torch
 transformers
 pillow
 scikit-fuzzy
 firebase-admin
+python-dotenv
+requests
+werkzeug
 gunicorn
+pytest
+pyyaml
+librosa
+joblib

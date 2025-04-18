@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import tempfile
 from flask import request, jsonify, Blueprint
 from firebase_admin import auth, firestore
 
@@ -11,43 +10,65 @@ logger = logging.getLogger("emotion_detector")
 
 # Initialize Firebase with credentials if available
 firebase_initialized = False
-firebase_temp_file = None
 try:
     from firebase_admin import auth, credentials, firestore, initialize_app
     
-    # Check for credentials in environment variable first
+    # Try to load Firebase credentials from environment variable
     firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
-    cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH', './firebase-credentials.json')
     
-    # If credentials JSON is provided as environment variable, write to temp file
+    # Check if we have JSON credentials in the environment variable
     if firebase_creds_json:
         try:
-            firebase_temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.json')
-            with open(firebase_temp_file.name, 'w') as f:
-                f.write(firebase_creds_json)
-            cred_path = firebase_temp_file.name
-            logger.info(f"Created temporary Firebase credentials file from environment variable")
+            # For Render deployment, we might need to handle the JSON string properly
+            if isinstance(firebase_creds_json, str):
+                try:
+                    cred_dict = json.loads(firebase_creds_json)
+                    cred = credentials.Certificate(cred_dict)
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse FIREBASE_CREDENTIALS_JSON as JSON. Trying to write to file and load.")
+                    # Write the string to a temporary file and load from there
+                    with open('temp-firebase-credentials.json', 'w') as f:
+                        f.write(firebase_creds_json)
+                    cred = credentials.Certificate('temp-firebase-credentials.json')
+                    # Clean up the temporary file
+                    os.remove('temp-firebase-credentials.json')
+            else:
+                cred_dict = firebase_creds_json
+                cred = credentials.Certificate(cred_dict)
+                
+            firebase_app = initialize_app(cred)
+            db = firestore.client()
+            users_collection = db.collection('users')
+            firebase_initialized = True
+            logger.info("Firebase initialized successfully from environment variable")
         except Exception as e:
-            logger.error(f"Failed to create temporary credentials file: {str(e)}")
-    
-    # Initialize Firebase with credentials file
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_app = initialize_app(cred)
-        db = firestore.client()
-        users_collection = db.collection('users')
-        firebase_initialized = True
-        logger.info("Firebase initialized successfully")
+            logger.error(f"Failed to initialize Firebase from environment variable: {str(e)}")
     else:
-        logger.warning(f"Firebase credentials file not found at {cred_path}. Auth features will be disabled.")
+        # Fall back to file-based credentials
+        cred_path = os.environ.get('FIREBASE_CREDENTIALS_PATH', './firebase-credentials.json')
+        if os.path.exists(cred_path):
+            try:
+                cred = credentials.Certificate(cred_path)
+                firebase_app = initialize_app(cred)
+                db = firestore.client()
+                users_collection = db.collection('users')
+                firebase_initialized = True
+                logger.info("Firebase initialized successfully from file")
+            except Exception as inner_e:
+                logger.error(f"Failed to initialize Firebase with provided credentials: {str(inner_e)}. Check if the credentials are valid and have sufficient permissions.")
+                # Add more specific error guidance
+                if "private_key" in str(inner_e):
+                    logger.error("The private key in the credentials file appears to be malformed. Ensure it contains the correct format including newline characters.")
+                elif "project_id" in str(inner_e):
+                    logger.error("Project ID in the credentials file may be invalid. Check the Firebase Console to verify the correct project ID.")
+                elif "permission" in str(inner_e).lower() or "access" in str(inner_e).lower():
+                    logger.error("Permission denied. Ensure the service account has appropriate permissions in Firebase.")
+        else:
+            logger.warning(f"Firebase credentials file not found at {cred_path}. Auth features will be disabled.")
+            logger.info(f"To enable Firebase authentication, copy firebase-credentials.json.template to {cred_path} and update with your credentials.")
 except Exception as e:
     logger.error(f"Failed to initialize Firebase: {str(e)}. Auth features will be disabled.")
-    # Clean up temp file if it exists
-    if firebase_temp_file and os.path.exists(firebase_temp_file.name):
-        try:
-            os.unlink(firebase_temp_file.name)
-        except Exception:
-            pass
+    logger.info("Ensure firebase-admin package is installed: pip install firebase-admin")
 
 @auth_routes.route('/api/auth/register', methods=['POST'])
 def register():

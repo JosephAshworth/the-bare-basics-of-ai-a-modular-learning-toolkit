@@ -1,19 +1,47 @@
-# Credentials and sensitive data
-firebase-credentials.json
-*.pem
-*.key
-
-# Python cache files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.env
+.env.local
 
 # Logs
 *.log
+emotion_detector*.log
 
-# Virtual Environment
-venv/
-env/
+# Debug
+debug/
 
-# Large model files (if models should be downloaded at runtime)
-saved_models/ 
+# Firebase credentials (only include templates)
+firebase-credentials.json
+
+# Local database
+*.db
+*.sqlite3
+
+# Saved models and cache
+saved_models/
+.cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDE specific files
+.idea/
+.vscode/
+
+# OS specific files
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock 

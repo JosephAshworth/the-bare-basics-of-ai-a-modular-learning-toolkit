@@ -1,4 +1,3 @@
-import os
 import io
 import json
 import base64
@@ -143,8 +142,18 @@ def get_decision_paths(model, feature_names, X):
                 
             # Get the feature and threshold for this node
             feature_idx = model.tree_.feature[node_id]
+            
+            # Skip if this is a leaf node (feature_idx will be -2)
+            if feature_idx < 0:
+                continue
+                
             threshold = model.tree_.threshold[node_id]
-            feature_name = feature_names[feature_idx]
+            
+            # Ensure feature_idx is within bounds of feature_names
+            if feature_idx < len(feature_names):
+                feature_name = feature_names[feature_idx]
+            else:
+                feature_name = f"feature_{feature_idx}"
             
             # Determine if this is a left or right child
             if X[i, feature_idx] <= threshold:
@@ -158,7 +167,7 @@ def get_decision_paths(model, feature_names, X):
 def create_partial_dependence_plot_display(model, X, feature_names, feature_idx, unique_classes):
     """Create partial dependence plots using manual calculation."""
     try:
-        print(f"DEBUG: Creating PDP for feature {feature_names[feature_idx]} using manual calculation")
+        print(f"DEBUG: Creating PDP for feature {feature_idx}: {feature_names[feature_idx]} using manual calculation")
         
         # Get class names from iris dataset if using iris
         class_names = None
@@ -177,14 +186,36 @@ def create_partial_dependence_plot_display(model, X, feature_names, feature_idx,
         # Create new figure with white background
         fig = plt.figure(figsize=(10, 6), facecolor='white')
         
-        # Create a grid of feature values to evaluate
-        feature_min = X[:, feature_idx].min()
-        feature_max = X[:, feature_idx].max()
-        feature_grid = np.linspace(feature_min, feature_max, num=50)
+        # Make sure X is a numpy array for indexing
+        if not isinstance(X, np.ndarray):
+            X = X.to_numpy()
+        
+        # Create a grid of feature values to evaluate - use more points for smoother curves
+        feature_min = np.nanmin(X[:, feature_idx])
+        feature_max = np.nanmax(X[:, feature_idx])
+        
+        # If the range is too small, expand it slightly to avoid issues
+        if np.isclose(feature_min, feature_max):
+            feature_min = feature_min - 0.1
+            feature_max = feature_max + 0.1
+            print(f"Warning: Feature {feature_names[feature_idx]} has very small range. Expanded to [{feature_min}, {feature_max}]")
+        
+        # Expand the range slightly beyond min and max for better visualization
+        padding = (feature_max - feature_min) * 0.05
+        feature_min = max(0, feature_min - padding)  # Don't go below 0 for physical measurements
+        feature_max = feature_max + padding
+        
+        # Create more points for smoother curves
+        feature_grid = np.linspace(feature_min, feature_max, num=100)
         
         # Colors for different classes
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
                  '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+        
+        # Create sample batches to avoid memory issues with large datasets
+        n_samples = min(1000, len(X))
+        sample_indices = np.random.choice(len(X), n_samples, replace=False if len(X) >= n_samples else True)
+        X_sample = X[sample_indices]
         
         # For each class, calculate and plot PDP
         for i, target_class in enumerate(unique_classes):
@@ -197,14 +228,27 @@ def create_partial_dependence_plot_display(model, X, feature_names, feature_idx,
             else:
                 class_label = f"Class {target_class}"
             
-            # Calculate PDP values manually
+            # Calculate PDP values manually using sampling approach
             pdp_values = []
             for grid_value in feature_grid:
-                X_modified = X.copy()
+                # Create multiple copies with the feature value set
+                X_modified = X_sample.copy()
                 X_modified[:, feature_idx] = grid_value
+                
+                # Get probabilities for all samples
                 y_pred_proba = model.predict_proba(X_modified)
+                
+                # Average probability across samples
                 avg_proba = np.mean(y_pred_proba[:, class_position])
                 pdp_values.append(avg_proba)
+            
+            # Apply slight smoothing for better visualization - 3-point moving average
+            if len(pdp_values) > 3:
+                smoothed_values = np.convolve(pdp_values, np.ones(3)/3, mode='same')
+                # Keep endpoints unchanged
+                smoothed_values[0] = pdp_values[0]
+                smoothed_values[-1] = pdp_values[-1]
+                pdp_values = smoothed_values
             
             # Plot line for this class
             plt.plot(feature_grid, pdp_values, 
@@ -214,7 +258,7 @@ def create_partial_dependence_plot_display(model, X, feature_names, feature_idx,
         
         # Customize the plot
         plt.xlabel(feature_names[feature_idx], fontsize=12, fontweight='bold')
-        plt.ylabel('Partial Dependence', fontsize=12, fontweight='bold')
+        plt.ylabel('Predicted Probability', fontsize=12, fontweight='bold')
         plt.title(f'Partial Dependence Plot for {feature_names[feature_idx]}', fontsize=14, fontweight='bold', pad=20)
         plt.grid(True, alpha=0.3, linestyle='--')
         plt.legend(loc='best', frameon=True, framealpha=0.9, fontsize=10)
@@ -326,49 +370,156 @@ def train_model():
         # Load and validate dataset
         if data['dataset'] == 'iris':
             iris = load_iris()
-            X = pd.DataFrame(iris.data, columns=iris.feature_names)
+            
+            # Only include selected features (not marked for discard)
+            selected_features = data['selectedFeatures']
+            print(f"Using {len(selected_features)} selected features out of {len(iris.feature_names)} total features")
+            print(f"Selected features: {selected_features}")
+            
+            # Make sure we have at least one feature selected
+            if len(selected_features) == 0:
+                raise ModelError("At least one feature must be selected for training")
+            
+            # Get indices of selected features
+            feature_indices = [i for i, feature in enumerate(iris.feature_names) if feature in selected_features]
+            
+            # Select only the requested features
+            X = pd.DataFrame(iris.data[:, feature_indices], columns=[iris.feature_names[i] for i in feature_indices])
             y = iris.target
-            feature_names = iris.feature_names
+            feature_names = [iris.feature_names[i] for i in feature_indices]
             target_names = iris.target_names  # Get actual class names
+            
+            # Convert to numpy arrays and split the data
+            X_np = X.to_numpy()
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_np, y, test_size=data['testSize'], random_state=42
+            )
+            
+            # Scale features
+            scaler = StandardScaler()
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
         else:
             validate_custom_dataset(data)
             df = pd.DataFrame(data['customData'])
             y = df[data['targetFeature']]
             validate_target_feature(y)
-            X = df[data['selectedFeatures']]
-            feature_names = data['selectedFeatures']
+            
+            # Only include features that were selected (not marked for discard)
+            selected_features = data['selectedFeatures']
+            print(f"Using {len(selected_features)} selected features out of {len(df.columns) - 1} total features (excluding target)")
+            print(f"Selected features: {selected_features}")
+            
+            # Make sure we have at least one feature selected
+            if len(selected_features) == 0:
+                raise ModelError("At least one feature must be selected for training")
+                
+            X = df[selected_features]
+            feature_names = selected_features
             target_names = None  # No predefined class names for custom datasets
+            
+            # Detect and encode categorical features
+            categorical_features = []
+            for col in X.columns:
+                # Check if column contains string values or boolean
+                if X[col].dtype == 'object' or X[col].dtype == 'bool':
+                    categorical_features.append(col)
+                    
+            print(f"Detected categorical features: {categorical_features}")
+            
+            # Create a preprocessor for categorical data
+            if categorical_features:
+                from sklearn.compose import ColumnTransformer
+                from sklearn.preprocessing import OneHotEncoder
+                
+                # Create transformers for categorical features
+                categorical_transformer = OneHotEncoder(handle_unknown='ignore')
+                
+                # Create column transformer
+                preprocessor = ColumnTransformer(
+                    transformers=[
+                        ('cat', categorical_transformer, categorical_features)
+                    ],
+                    remainder='passthrough'
+                )
+                
+                # Fit and transform the data
+                X_processed = preprocessor.fit_transform(X)
+                
+                # Get feature names after transformation
+                if hasattr(preprocessor, 'get_feature_names_out'):
+                    # For sklearn 1.0+
+                    transformed_feature_names = preprocessor.get_feature_names_out()
+                else:
+                    # Manually create feature names
+                    transformed_feature_names = []
+                    # Add names for categorical features (one-hot encoded)
+                    for cat_feat in categorical_features:
+                        unique_values = X[cat_feat].unique()
+                        for val in unique_values:
+                            transformed_feature_names.append(f"{cat_feat}_{val}")
+                    # Add names for numerical features
+                    for col in X.columns:
+                        if col not in categorical_features:
+                            transformed_feature_names.append(col)
+                            
+                print(f"Transformed data with shape: {X_processed.shape}")
+                print(f"Transformed feature names: {transformed_feature_names[:10]}...")
+                
+                # Update X to use processed data
+                from scipy.sparse import issparse
+                if issparse(X_processed):
+                    X_processed = X_processed.toarray()
+                X = pd.DataFrame(X_processed)
+            
+            # Convert to numpy arrays before splitting
+            X_np = X.to_numpy()
+            
+            # Make sure target is also properly encoded if categorical
+            if y.dtype == 'object' or y.dtype == 'bool':
+                from sklearn.preprocessing import LabelEncoder
+                label_encoder = LabelEncoder()
+                y = label_encoder.fit_transform(y)
+                
+            print(f"Dataset loaded: {len(X)} samples, {len(feature_names)} features")
+            
+            # Split and scale the data
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_np, y, test_size=data['testSize'], random_state=42
+            )
+            
+            # Scale features if needed
+            scaler = StandardScaler()
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
         
-        print(f"Dataset loaded: {len(X)} samples, {len(feature_names)} features")
-        
-        # Split and scale the data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=data['testSize'], random_state=42
-        )
-        
-        # Convert to numpy arrays before scaling to avoid feature names warning
-        X_train_np = X_train.to_numpy()
-        X_test_np = X_test.to_numpy()
-        
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train_np)
-        X_test_scaled = scaler.transform(X_test_np)
-        
-        print(f"Data split and scaled: train={X_train_scaled.shape}, test={X_test_scaled.shape}")
+        print(f"Data split and scaled: train={X_train.shape}, test={X_test.shape}")
         
         # Train model
         if data['modelType'] == 'decision_tree':
+            # Create a more nuanced decision tree that's not too simple and not too complex
+            max_depth = data.get('max_depth', 5)  # Use provided max_depth or default to 5
+            
+            # For very small datasets, ensure we don't overfit
+            if X_train.shape[0] < 50:
+                max_depth = min(max_depth, 3)
+                
             model = DecisionTreeClassifier(
                 min_samples_split=data['minSamplesSplit'],
+                max_depth=max_depth,              # Limit tree depth for better generalization
+                min_samples_leaf=2,               # Require at least 2 samples in leaf nodes
                 random_state=42
             )
-            model.fit(X_train_scaled, y_train)
+            model.fit(X_train, y_train)
+            
+            # Log model properties
+            print(f"Decision tree depth: {model.get_depth()}, nodes: {model.tree_.node_count}")
         else:
             model = KNeighborsClassifier(
                 n_neighbors=data['nNeighbors'],
                 n_jobs=-1
             )
-            model.fit(X_train_scaled, y_train)
+            model.fit(X_train, y_train)
         
         print(f"Training {data['modelType']} model...")
         print("Model training completed")
@@ -376,16 +527,16 @@ def train_model():
         # Calculate metrics
         metrics = {
             'train': {
-                'accuracy': float(accuracy_score(y_train, model.predict(X_train_scaled))),
-                'precision': float(precision_score(y_train, model.predict(X_train_scaled), average='weighted')),
-                'recall': float(recall_score(y_train, model.predict(X_train_scaled), average='weighted')),
-                'f1': float(f1_score(y_train, model.predict(X_train_scaled), average='weighted'))
+                'accuracy': float(accuracy_score(y_train, model.predict(X_train))),
+                'precision': float(precision_score(y_train, model.predict(X_train), average='weighted')),
+                'recall': float(recall_score(y_train, model.predict(X_train), average='weighted')),
+                'f1': float(f1_score(y_train, model.predict(X_train), average='weighted'))
             },
             'test': {
-                'accuracy': float(accuracy_score(y_test, model.predict(X_test_scaled))),
-                'precision': float(precision_score(y_test, model.predict(X_test_scaled), average='weighted')),
-                'recall': float(recall_score(y_test, model.predict(X_test_scaled), average='weighted')),
-                'f1': float(f1_score(y_test, model.predict(X_test_scaled), average='weighted'))
+                'accuracy': float(accuracy_score(y_test, model.predict(X_test))),
+                'precision': float(precision_score(y_test, model.predict(X_test), average='weighted')),
+                'recall': float(recall_score(y_test, model.predict(X_test), average='weighted')),
+                'f1': float(f1_score(y_test, model.predict(X_test), average='weighted'))
             }
         }
         
@@ -395,11 +546,11 @@ def train_model():
             visualization = create_visualisation(model, X, y, data['modelType'], feature_names)
         
         # Generate model insights
-        insights = create_model_insights(model, X_train_scaled, y_train, feature_names, data['modelType'])
+        insights = create_model_insights(model, X, y, feature_names, data['modelType'])
         
         # Generate confusion matrices for train and test sets
-        train_cm = create_confusion_matrix(model, X_train_scaled, y_train, target_names)
-        test_cm = create_confusion_matrix(model, X_test_scaled, y_test, target_names)
+        train_cm = create_confusion_matrix(model, X_train, y_train, target_names)
+        test_cm = create_confusion_matrix(model, X_test, y_test, target_names)
         
         # Add confusion matrices to insights
         insights['confusion_matrices'] = {
@@ -410,9 +561,9 @@ def train_model():
         # Get decision paths for decision tree
         if data['modelType'] == 'decision_tree':
             # Limit the number of samples to avoid overwhelming the response
-            max_samples = min(10, len(X_train_scaled))
-            sample_indices = np.random.choice(len(X_train_scaled), max_samples, replace=False)
-            X_train_sample = X_train_scaled[sample_indices]
+            max_samples = min(10, len(X_train))
+            sample_indices = np.random.choice(len(X_train), max_samples, replace=False)
+            X_train_sample = X_train[sample_indices]
             insights['decision_path'] = get_decision_paths(model, feature_names, X_train_sample)
         
         # Generate partial dependence plots
@@ -427,35 +578,80 @@ def train_model():
         unique_classes = np.unique(y)
         print(f"Number of classes: {len(unique_classes)}")
         
+        # Make sure X is a numpy array for indexing
+        if not isinstance(X, np.ndarray):
+            X = X.to_numpy()
+            
+        # Check data dimensions
+        print(f"X shape: {X.shape}")
+        if X.shape[1] < len(feature_names):
+            print(f"WARNING: X has {X.shape[1]} columns but there are {len(feature_names)} feature names")
+            # Adjust feature_names to match the actual data
+            feature_names = feature_names[:X.shape[1]]
+        
+        # Generate PDPs only for numerical features
+        pdp_features = []
         for i, feature in enumerate(feature_names):
+            # Skip if i is out of bounds for X
+            if i >= X.shape[1]:
+                print(f"Skipping feature {feature} (index {i}) as it's out of bounds for X with shape {X.shape}")
+                continue
+                
+            # Check if feature is numerical
+            if np.issubdtype(X[:, i].dtype, np.number):
+                pdp_features.append((i, feature))
+            else:
+                print(f"Skipping non-numeric feature {feature} with dtype {X[:, i].dtype}")
+                
+        print(f"Will generate PDPs for {len(pdp_features)} numerical features")
+        
+        # Process each suitable feature
+        for feature_idx, feature_name in pdp_features:
             try:
-                print(f"\nProcessing feature {i}: {feature}")
+                print(f"\nProcessing feature {feature_idx}: {feature_name}")
                 
                 # Generate the partial dependence plot
-                pdp_plot = create_partial_dependence_plot_display(model, X_train_scaled, feature_names, i, unique_classes)
+                pdp_plot = create_partial_dependence_plot_display(model, X, feature_names, feature_idx, unique_classes)
                 
                 if pdp_plot is not None:
-                    print(f"Successfully generated PDP for {feature}")
-                    insights['partial_dependence_plots'][feature] = pdp_plot
+                    print(f"Successfully generated PDP for {feature_name}")
+                    insights['partial_dependence_plots'][feature_name] = pdp_plot
                     
                     # Generate explanations for each class
                     class_explanations = {}
                     
                     # Create a new figure for analysis only (not for display)
-                    feature_min = X_train_scaled[:, i].min()
-                    feature_max = X_train_scaled[:, i].max()
+                    feature_min = np.nanmin(X[:, feature_idx])
+                    feature_max = np.nanmax(X[:, feature_idx])
+                    
+                    # If range is too small, expand it
+                    if np.isclose(feature_min, feature_max):
+                        feature_min = feature_min - 0.1
+                        feature_max = feature_max + 0.1
+                        
                     feature_grid = np.linspace(feature_min, feature_max, num=50)
                     
                     for class_idx, target_class in enumerate(unique_classes):
                         # Calculate PDP values manually for analysis
                         pdp_values = []
-                        for grid_value in feature_grid:
-                            X_modified = X_train_scaled.copy()
-                            X_modified[:, i] = grid_value
-                            y_pred_proba = model.predict_proba(X_modified)
-                            class_position = np.where(model.classes_ == target_class)[0][0]
-                            avg_proba = np.mean(y_pred_proba[:, class_position])
-                            pdp_values.append(avg_proba)
+                        try:
+                            for grid_value in feature_grid:
+                                X_modified = X.copy()
+                                X_modified[:, feature_idx] = grid_value
+                                y_pred_proba = model.predict_proba(X_modified)
+                                class_position = np.where(model.classes_ == target_class)[0][0]
+                                avg_proba = np.mean(y_pred_proba[:, class_position])
+                                pdp_values.append(avg_proba)
+                        except Exception as e:
+                            print(f"Error calculating PDP values for class {target_class}: {str(e)}")
+                            pdp_values = []
+                        
+                        # Skip if we couldn't calculate values
+                        if not pdp_values:
+                            class_explanations[f"class_{target_class}"] = (
+                                f"Unable to calculate partial dependence for this feature and class."
+                            )
+                            continue
                         
                         # Calculate statistics for explanation
                         mean_effect = np.mean(pdp_values)
@@ -463,38 +659,79 @@ def train_model():
                         max_effect = np.max(pdp_values)
                         min_effect = np.min(pdp_values)
                         
+                        # Detect if there's meaningful variation in the values
+                        has_variation = std_effect > 0.01
+                        
                         # Find effect direction: where is the maximum effect?
                         max_idx = np.argmax(pdp_values)
-                        direction = "higher" if max_idx > len(feature_grid) // 2 else "lower"
+                        min_idx = np.argmin(pdp_values)
                         
+                        # Calculate relative position (0 to 1) of max and min
+                        max_pos = max_idx / (len(feature_grid) - 1)
+                        min_pos = min_idx / (len(feature_grid) - 1)
+                        
+                        # Determine feature value at max effect
+                        feature_at_max = feature_grid[max_idx]
+                        
+                        # Direction descriptions
+                        if max_pos < 0.3:
+                            direction = "lower"
+                        elif max_pos > 0.7:
+                            direction = "higher"
+                        else:
+                            direction = "moderate"
+                            
                         # Get class name for explanations
                         if target_names is not None and class_idx < len(target_names):
                             class_name = target_names[class_idx]
                         else:
                             class_name = f"Class {target_class}"
                         
+                        # Create a more meaningful explanation based on the pattern
+                        if not has_variation:
+                            if mean_effect > 0.9:
+                                pattern_text = f"This class is consistently predicted with high probability across all values of {feature_name}."
+                            elif mean_effect < 0.1:
+                                pattern_text = f"This class is consistently not predicted across all values of {feature_name}."
+                            else:
+                                pattern_text = f"This feature has little influence on predicting this class, showing a consistent effect."
+                        else:
+                            effect_range = max_effect - min_effect
+                            if effect_range > 0.5:
+                                strength = "strong"
+                            elif effect_range > 0.2:
+                                strength = "moderate"
+                            else:
+                                strength = "slight"
+                                
+                            pattern_text = (
+                                f"This feature has a {strength} influence on predicting this class. "
+                                f"The highest probability ({max_effect:.2f}) occurs at {direction} values "
+                                f"(around {feature_at_max:.2f})."
+                            )
+                        
                         class_explanations[f"class_{target_class}"] = (
                             f"For {class_name}, the average effect is {mean_effect:.2f} "
                             f"with a standard deviation of {std_effect:.2f}. "
                             f"The effect ranges from {min_effect:.2f} to {max_effect:.2f}. "
-                            f"The strongest effect appears at {direction} values of {feature}."
+                            f"{pattern_text}"
                         )
                     
-                    insights['pdp_explanations'][feature] = class_explanations
+                    insights['pdp_explanations'][feature_name] = class_explanations
                 else:
-                    print(f"Failed to generate PDP for {feature}")
-                    insights['pdp_explanations'][feature] = {
+                    print(f"Failed to generate PDP for {feature_name}")
+                    insights['pdp_explanations'][feature_name] = {
                         f"class_{target_class}": (
-                            f"Unable to generate partial dependence plot for {feature}. "
+                            f"Unable to generate partial dependence plot for {feature_name}. "
                             f"This might be due to the feature type or model limitations."
                         ) for target_class in unique_classes
                     }
             except Exception as e:
-                print(f"Error processing feature {feature}: {str(e)}")
+                print(f"Error processing feature {feature_name}: {str(e)}")
                 traceback.print_exc()  # Print full traceback
-                insights['pdp_explanations'][feature] = {
+                insights['pdp_explanations'][feature_name] = {
                     f"class_{target_class}": (
-                        f"Unable to generate partial dependence plot for {feature}. "
+                        f"Unable to generate partial dependence plot for {feature_name}. "
                         f"This might be due to the feature type or model limitations."
                     ) for target_class in unique_classes
                 }

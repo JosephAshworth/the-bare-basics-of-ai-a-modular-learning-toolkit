@@ -30,7 +30,8 @@ export const trainModel = async (params) => {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest'
       },
-      withCredentials: false // Set to false to avoid preflight complexity
+      withCredentials: false, // Set to false to avoid preflight complexity
+      timeout: 60000 // 60 second timeout for model training
     };
     
     const response = await apiService.post('/api/train-model', params, config);
@@ -38,27 +39,73 @@ export const trainModel = async (params) => {
   } catch (error) {
     console.error('❌ Model training error:', error);
     
-    // Check specifically for CORS errors
-    if (error.message && (
+    // Create an enhanced error object with more useful information
+    const enhancedError = {
+      message: error.message || 'Unknown error',
+      status: error.response?.status,
+      data: error.response?.data,
+      isNetworkError: !error.response,
+      isCorsError: false,
+      isTimeout: error.code === 'ECONNABORTED' || (error.message && error.message.includes('timeout'))
+    };
+    
+    // Handle specific error cases
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('❌ Server responded with error:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+      
+      if (error.response.status === 502) {
+        enhancedError.message = 'Backend server error (502 Bad Gateway)';
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('❌ No response received from server:', error.request);
+      
+      // Check for timeout
+      if (enhancedError.isTimeout) {
+        enhancedError.message = 'Request timed out. The operation may be taking too long or the server is unavailable.';
+      }
+      
+      // Check for CORS errors
+      if (error.message && (
         error.message.includes('CORS') || 
         error.message.includes('Access-Control-Allow-Origin') ||
         error.message.includes('cross-origin')
       )) {
-      console.error('🚫 CORS error detected:', error.message);
-      
-      // Try the CORS test endpoint as a fallback
-      try {
-        console.log('🔄 Trying CORS test endpoint...');
-        const testResponse = await testCORS();
-        console.log('✅ CORS test endpoint response:', testResponse);
-      } catch (corsTestError) {
-        console.error('❌ CORS test endpoint also failed:', corsTestError);
+        console.error('🚫 CORS error detected:', error.message);
+        enhancedError.isCorsError = true;
+        enhancedError.message = 'CORS error: The server is rejecting cross-origin requests';
+        
+        // Try the CORS test endpoint as a diagnostic
+        try {
+          console.log('🔄 Trying CORS test endpoint...');
+          const testResponse = await testCORS();
+          console.log('✅ CORS test endpoint response:', testResponse);
+          enhancedError.corsTestResponse = testResponse;
+        } catch (corsTestError) {
+          console.error('❌ CORS test endpoint also failed:', corsTestError);
+          enhancedError.corsTestError = corsTestError.message;
+        }
       }
-      
-      throw new Error('CORS error: The server is rejecting cross-origin requests. Please check your browser console for details.');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('❌ Error setting up request:', error.message);
     }
     
-    throw new Error(error.response?.data?.error || 'An error occurred while training the model');
+    // Collect details about the request for debugging
+    enhancedError.requestInfo = {
+      url: '/api/train-model',
+      method: 'POST',
+      timestamp: new Date().toISOString(),
+      params: JSON.stringify(params).substring(0, 100) + '...' // Truncate for safety
+    };
+    
+    throw enhancedError;
   }
 };
 

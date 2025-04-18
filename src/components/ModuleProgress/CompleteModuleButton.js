@@ -22,6 +22,29 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
     checkModuleStatus();
   }, [moduleId]);
 
+  // Helper to get the auth token
+  const getAuthToken = async () => {
+    // First try to get from localStorage for better performance
+    const localToken = localStorage.getItem('token');
+    if (localToken) {
+      console.log('🔑 Using token from localStorage for module completion');
+      return localToken;
+    }
+    
+    // If not available in localStorage, get fresh token from Firebase
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    console.log('🔑 Getting fresh token from Firebase for module completion');
+    const token = await currentUser.getIdToken(true);
+    
+    // Store it in localStorage for future use
+    localStorage.setItem('token', token);
+    return token;
+  };
+
   const checkModuleStatus = async () => {
     // Skip server calls if we've previously encountered persistent errors
     if (skipServerCalls) {
@@ -37,8 +60,8 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
         return; // Not authenticated
       }
       
-      // Get the authentication token
-      const token = await currentUser.getIdToken();
+      // Get the authentication token using our helper function
+      const token = await getAuthToken();
       
       console.log(`Checking status for module: ${moduleId}`);
       
@@ -88,15 +111,8 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
     }
     
     try {      
-      // First try to update the server
-      const currentUser = auth.currentUser;
-      
-      if (!currentUser) {
-        throw new Error('Not authenticated');
-      }
-      
       // Get the authentication token
-      const token = await auth.currentUser.getIdToken();
+      const token = await getAuthToken();
       
       // Determine which endpoint to use
       let endpoint = useFallbackEndpoint 

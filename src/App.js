@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { auth } from './firebase';
 
 // Auth components
@@ -32,6 +31,16 @@ const ProtectedRoute = ({ children }) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       setLoading(false);
+      
+      // If user is logged in, get and store their token
+      if (user) {
+        user.getIdToken(true).then(token => {
+          localStorage.setItem('token', token);
+          console.log('🔑 Auth token refreshed and stored in localStorage');
+        }).catch(error => {
+          console.error('Error refreshing token:', error);
+        });
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -49,6 +58,32 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   const { theme } = useThemeContext();
+  
+  // Set up token refresh
+  useEffect(() => {
+    // Function to refresh the token
+    const refreshToken = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const token = await currentUser.getIdToken(true);
+          localStorage.setItem('token', token);
+          console.log('🔐 Firebase token refreshed periodically');
+        }
+      } catch (error) {
+        console.error('Token refresh error:', error);
+      }
+    };
+    
+    // Set up an interval to refresh the token every 30 minutes (1,800,000 ms)
+    const tokenRefreshInterval = setInterval(refreshToken, 1800000);
+    
+    // Initial token refresh
+    refreshToken();
+    
+    // Clear the interval when the component unmounts
+    return () => clearInterval(tokenRefreshInterval);
+  }, []);
   
   return (
     <Router>

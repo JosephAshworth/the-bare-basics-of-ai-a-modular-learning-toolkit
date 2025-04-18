@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from '../firebase';
 
 // Get the base URL from environment variables or default to localhost
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -12,24 +13,70 @@ const apiInstance = axios.create({
   timeout: 30000, // 30 seconds
 });
 
+// Helper function to get the best available auth token
+const getBestAvailableToken = async (forceRefresh = false) => {
+  try {
+    // First check if the user is logged in
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      // If forceRefresh is true or we're handling an auth error, get a fresh token
+      if (forceRefresh) {
+        console.log('🔄 Forcing refresh of Firebase token');
+        const freshToken = await currentUser.getIdToken(true);
+        localStorage.setItem('token', freshToken);
+        return freshToken;
+      }
+      
+      // Otherwise use stored token if available
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        return storedToken;
+      }
+      
+      // As a fallback, get a fresh token
+      console.log('🔄 No stored token found, getting fresh Firebase token');
+      const newToken = await currentUser.getIdToken();
+      localStorage.setItem('token', newToken);
+      return newToken;
+    }
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+  }
+  
+  // If nothing works, return null
+  return null;
+};
+
 // Add request interceptor for logging
 apiInstance.interceptors.request.use(
-  (config) => {
-    console.log(`🔄 API Request: ${config.method.toUpperCase()} ${config.url}`, config.data);
+  async (config) => {
+    console.log(`🔄 API Request: ${config.method.toUpperCase()} ${config.url}`, 
+      config.data ? JSON.stringify(config.data).substring(0, 100) : 'No data');
     
-    // Only add auth token from localStorage if Authorization header isn't already set
-    // This ensures that method-specific auth headers take precedence
-    if (!config.headers.Authorization) {
-      const token = localStorage.getItem('token');
+    // Debug: Log all headers to see what's actually there
+    console.log('🔑 Request Headers:', JSON.stringify(config.headers, null, 2));
+    
+    // Check if we have an Authorization header - need to check headers common/get/post/etc
+    const hasAuthHeader = 
+      (config.headers.Authorization) || 
+      (config.headers.common && config.headers.common.Authorization) ||
+      (config.headers[config.method] && config.headers[config.method].Authorization);
+    
+    if (!hasAuthHeader) {
+      // Get the best available token
+      const token = await getBestAvailableToken();
       if (token) {
-        console.log('Using token from localStorage for authentication');
+        console.log('🔑 Using token from helper function for authentication');
         config.headers.Authorization = `Bearer ${token}`;
       } else {
-        console.log('No token found in localStorage and no Authorization header provided');
+        console.log('⚠️ No token available for request');
       }
     } else {
-      console.log('Using provided Authorization header');
+      console.log('🔑 Using provided Authorization header');
     }
+    
+    // Debug: Log final headers after modifications
+    console.log('🔑 Final Request Headers:', JSON.stringify(config.headers, null, 2));
     
     return config;
   },
@@ -45,9 +92,31 @@ apiInstance.interceptors.response.use(
     console.log(`✅ API Response: ${response.status}`, response.data);
     return response;
   },
-  (error) => {
+  async (error) => {
     if (error.response) {
       console.error(`❌ Response Error: ${error.response.status}`, error.response.data);
+      // Log response headers for debugging
+      console.error('❌ Response Headers:', error.response.headers);
+      
+      // If we get a 401 (Unauthorized) or 403 (Forbidden), try to refresh the token
+      if (error.response.status === 401 || error.response.status === 403) {
+        console.log('🔄 Authentication error, attempting to refresh token');
+        
+        try {
+          // Get a fresh token
+          const freshToken = await getBestAvailableToken(true);
+          
+          if (freshToken) {
+            console.log('🔄 Token refreshed, retrying request');
+            // Retry the request with the new token
+            const originalRequest = error.config;
+            originalRequest.headers.Authorization = `Bearer ${freshToken}`;
+            return apiInstance(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh token:', refreshError);
+        }
+      }
     } else {
       console.error('❌ Network Error:', error.message);
     }
@@ -57,17 +126,34 @@ apiInstance.interceptors.response.use(
 
 // API service with methods for common operations
 const apiService = {
+  // Helper method to ensure we have a valid token
+  refreshToken: async () => {
+    return await getBestAvailableToken(true);
+  },
+  
   // GET request with optional config
-  get: (endpoint, config) => apiInstance.get(endpoint, config),
+  get: (endpoint, config = {}) => {
+    console.log(`🔍 GET request to ${endpoint} with config:`, config);
+    return apiInstance.get(endpoint, config);
+  },
   
   // POST request with optional config
-  post: (endpoint, data, config) => apiInstance.post(endpoint, data, config),
+  post: (endpoint, data, config = {}) => {
+    console.log(`📝 POST request to ${endpoint} with config:`, config);
+    return apiInstance.post(endpoint, data, config);
+  },
   
   // PUT request with optional config
-  put: (endpoint, data, config) => apiInstance.put(endpoint, data, config),
+  put: (endpoint, data, config = {}) => {
+    console.log(`📝 PUT request to ${endpoint} with config:`, config);
+    return apiInstance.put(endpoint, data, config);
+  },
   
   // DELETE request with optional config
-  delete: (endpoint, config) => apiInstance.delete(endpoint, config),
+  delete: (endpoint, config = {}) => {
+    console.log(`🗑️ DELETE request to ${endpoint} with config:`, config);
+    return apiInstance.delete(endpoint, config);
+  },
   
   // Helper for file uploads
   uploadFile: (endpoint, formData, config = {}) => {
@@ -75,7 +161,7 @@ const apiService = {
       ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
-        ...config.headers
+        ...(config.headers || {})
       },
     };
     console.log(`📤 Uploading file to: ${backendUrl}${endpoint}`);

@@ -1,52 +1,77 @@
 import axios from 'axios';
 
-// Get the backend URL from environment variables or use a fallback
+// Get the base URL from environment variables or default to localhost
 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
-// Create an axios instance with the backend URL
-const api = axios.create({
+// Log the backend URL being used
+console.log(`📡 API Service initialized with backend URL: ${backendUrl}`);
+
+// Create an Axios instance with the base URL
+const apiInstance = axios.create({
   baseURL: backendUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 30000, // 30 seconds
 });
 
-// Add request interceptor to include auth token if available
-api.interceptors.request.use(
+// Add request interceptor for logging
+apiInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    console.log(`🔄 API Request: ${config.method.toUpperCase()} ${config.url}`, config.data);
+    // Add auth token if available
+    const token = localStorage.getItem('token');
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    console.error('❌ Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-// Utility functions for API calls
+// Add response interceptor for logging
+apiInstance.interceptors.response.use(
+  (response) => {
+    console.log(`✅ API Response: ${response.status}`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error('❌ Response Error:', error.response ? error.response.data : error.message);
+    return Promise.reject(error);
+  }
+);
+
+// API service with methods for common operations
 const apiService = {
-  // General API methods
-  get: (endpoint, config = {}) => api.get(endpoint, config),
-  post: (endpoint, data, config = {}) => api.post(endpoint, data, config),
-  put: (endpoint, data, config = {}) => api.put(endpoint, data, config),
-  delete: (endpoint, config = {}) => api.delete(endpoint, config),
+  // GET request
+  get: (endpoint) => apiInstance.get(endpoint),
   
-  // Helper method for file uploads
-  uploadFile: (endpoint, formData, config = {}) => {
-    const uploadConfig = {
-      ...config,
+  // POST request
+  post: (endpoint, data) => apiInstance.post(endpoint, data),
+  
+  // PUT request
+  put: (endpoint, data) => apiInstance.put(endpoint, data),
+  
+  // DELETE request
+  delete: (endpoint) => apiInstance.delete(endpoint),
+  
+  // Helper for file uploads
+  uploadFile: (endpoint, formData) => {
+    const config = {
       headers: {
-        ...config.headers,
         'Content-Type': 'multipart/form-data',
       },
     };
-    return api.post(endpoint, formData, uploadConfig);
+    console.log(`📤 Uploading file to: ${backendUrl}${endpoint}`);
+    return apiInstance.post(endpoint, formData, config);
   },
-
-  // Method to get the full URL (for direct fetch calls)
-  getUrl: (path) => `${backendUrl}${path}`,
+  
+  // Get the full URL for an endpoint
+  getFullUrl: (endpoint) => {
+    const url = `${backendUrl}${endpoint}`;
+    console.log(`🔗 Full URL: ${url}`);
+    return url;
+  }
 };
 
 export default apiService; 

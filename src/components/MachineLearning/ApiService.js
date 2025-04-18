@@ -1,5 +1,6 @@
 import React from 'react';
 import apiService from '../../services/apiService';
+import { trainModelWithProxy, checkBackendConnection } from './CorsProxyService';
 
 /**
  * API Service component providing API-related functionality
@@ -21,91 +22,82 @@ const ApiService = () => {
  */
 export const trainModel = async (params) => {
   try {
-    console.log('🧠 Sending model training request with params:', params);
+    console.log('🧠 Preparing to send model training request with params:', params);
     
-    // Add additional headers to help with CORS
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      withCredentials: false, // Set to false to avoid preflight complexity
-      timeout: 60000 // 60 second timeout for model training
-    };
+    // Check backend connection status first
+    const connectionStatus = await checkBackendConnection();
+    console.log('🔍 Backend connection status:', connectionStatus);
     
-    const response = await apiService.post('/api/train-model', params, config);
-    return response.data;
-  } catch (error) {
-    console.error('❌ Model training error:', error);
-    
-    // Create an enhanced error object with more useful information
-    const enhancedError = {
-      message: error.message || 'Unknown error',
-      status: error.response?.status,
-      data: error.response?.data,
-      isNetworkError: !error.response,
-      isCorsError: false,
-      isTimeout: error.code === 'ECONNABORTED' || (error.message && error.message.includes('timeout'))
-    };
-    
-    // Handle specific error cases
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error('❌ Server responded with error:', {
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers
-      });
-      
-      if (error.response.status === 502) {
-        enhancedError.message = 'Backend server error (502 Bad Gateway)';
-      }
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error('❌ No response received from server:', error.request);
-      
-      // Check for timeout
-      if (enhancedError.isTimeout) {
-        enhancedError.message = 'Request timed out. The operation may be taking too long or the server is unavailable.';
-      }
-      
-      // Check for CORS errors
-      if (error.message && (
-        error.message.includes('CORS') || 
-        error.message.includes('Access-Control-Allow-Origin') ||
-        error.message.includes('cross-origin')
-      )) {
-        console.error('🚫 CORS error detected:', error.message);
-        enhancedError.isCorsError = true;
-        enhancedError.message = 'CORS error: The server is rejecting cross-origin requests';
-        
-        // Try the CORS test endpoint as a diagnostic
-        try {
-          console.log('🔄 Trying CORS test endpoint...');
-          const testResponse = await testCORS();
-          console.log('✅ CORS test endpoint response:', testResponse);
-          enhancedError.corsTestResponse = testResponse;
-        } catch (corsTestError) {
-          console.error('❌ CORS test endpoint also failed:', corsTestError);
-          enhancedError.corsTestError = corsTestError.message;
-        }
-      }
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('❌ Error setting up request:', error.message);
+    // If direct connection is not available, use proxy immediately
+    if (!connectionStatus.direct) {
+      console.log('⚠️ Direct connection not available, using proxy fallback');
+      return await trainModelWithProxy(params);
     }
     
-    // Collect details about the request for debugging
-    enhancedError.requestInfo = {
-      url: '/api/train-model',
-      method: 'POST',
-      timestamp: new Date().toISOString(),
-      params: JSON.stringify(params).substring(0, 100) + '...' // Truncate for safety
+    // For direct connections, proceed with normal flow but with fallback
+    try {
+      console.log('🧠 Sending model training request directly');
+      
+      // Add additional headers to help with CORS
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        withCredentials: false, // Set to false to avoid preflight complexity
+        timeout: 60000 // 60 second timeout for model training
+      };
+      
+      const response = await apiService.post('/api/train-model', params, config);
+      console.log('✅ Direct API call successful');
+      return response.data;
+    } catch (directError) {
+      console.warn('⚠️ Direct API call failed, trying proxy fallback:', directError.message);
+      
+      // Only use proxy fallback for network/CORS errors
+      if (!directError.response || 
+          directError.message.includes('Network') || 
+          directError.message.includes('CORS') ||
+          (directError.response && directError.response.status === 502)) {
+        console.log('🔄 Attempting proxy fallback for CORS/network error');
+        return await trainModelWithProxy(params);
+      } else {
+        // For other errors, propagate the original error
+        console.error('❌ API error not related to CORS/network:', directError);
+        throw directError;
+      }
+    }
+  } catch (error) {
+    console.error('❌ Model training completely failed:', error);
+    
+    // Create a user-friendly error object with diagnostic information
+    const friendlyError = {
+      message: error.message || 'An error occurred while training the model',
+      originalError: error,
+      isProxyError: error.proxyAttempts !== undefined,
+      timestamp: new Date().toISOString()
     };
     
-    throw enhancedError;
+    // Add extra debugging info for network errors
+    if (error.message && error.message.includes('Network')) {
+      friendlyError.message = 'Network error: Unable to connect to the ML training server';
+      friendlyError.troubleshooting = 'Please check your internet connection and try again later.';
+    }
+    
+    // Add extra help for CORS errors
+    if (error.message && error.message.includes('CORS')) {
+      friendlyError.message = 'CORS policy error: The server rejected cross-origin request';
+      friendlyError.troubleshooting = 'This is a server configuration issue. Try using a CORS browser extension as a temporary workaround.';
+    }
+    
+    // Add suggestions for 502 errors
+    if (error.status === 502 || (error.message && error.message.includes('502'))) {
+      friendlyError.message = 'Server error (502 Bad Gateway): The ML server is currently unavailable';
+      friendlyError.troubleshooting = 'The server might be down for maintenance or experiencing high load. Please try again later.';
+    }
+    
+    throw friendlyError;
   }
 };
 
@@ -125,6 +117,24 @@ export const testCORS = async () => {
       },
       withCredentials: false
     };
+    
+    // Try the connection check first which is more reliable
+    const connectionStatus = await checkBackendConnection();
+    if (!connectionStatus.direct) {
+      console.log('⚠️ Using proxy for CORS test');
+      // If direct connection fails, use a proxy for the test
+      const proxyUrl = connectionStatus.proxyUrl || 'https://cors-anywhere.herokuapp.com/';
+      const backendUrl = apiService.getFullUrl('/api/train-model/cors-test').replace(/^https?:\/\//, '');
+      const response = await fetch(`${proxyUrl}${backendUrl}`);
+      const data = await response.json();
+      return {
+        ...data,
+        via_proxy: true,
+        proxy_url: proxyUrl
+      };
+    }
+    
+    // Regular direct request if connection is fine
     const response = await apiService.get('/api/train-model/cors-test', config);
     return response.data;
   } catch (error) {

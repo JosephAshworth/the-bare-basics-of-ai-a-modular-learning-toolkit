@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Button, CircularProgress, Snackbar, Alert, Typography, Box, Link } from '@mui/material';
+import { 
+  Button, 
+  CircularProgress, 
+  Snackbar, 
+  Alert, 
+  Typography, 
+  Box, 
+  Link,
+  Chip
+} from '@mui/material';
 import { trainModel, fetchTreeExplanation, cleanupFiles, testCORS } from './ApiService';
 
 /**
@@ -16,9 +25,9 @@ const ModelTrainer = ({
   const [explainerPath, setExplainerPath] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDetails, setErrorDetails] = useState('');
+  const [troubleshooting, setTroubleshooting] = useState('');
   const [showError, setShowError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 2;
+  const [isUsingProxy, setIsUsingProxy] = useState(false);
 
   /**
    * Train a machine learning model with the given parameters
@@ -27,23 +36,26 @@ const ModelTrainer = ({
     setLoading(true);
     setErrorMessage('');
     setErrorDetails('');
+    setTroubleshooting('');
     setShowError(false);
+    setIsUsingProxy(false);
     onTrainingStart?.();
 
     try {
-      // Check backend connection first
+      // First perform a connection test
       try {
-        await testCORS();
-        console.log('✅ Backend connection test passed');
+        const corsTest = await testCORS();
+        console.log('✅ Backend connection test result:', corsTest);
+        // Check if we're using a proxy
+        if (corsTest.via_proxy) {
+          setIsUsingProxy(true);
+          console.log('⚠️ Using proxy for API communications');
+        }
       } catch (corsError) {
-        console.warn('⚠️ Backend connection test failed:', corsError);
-        // We'll continue anyway but log the warning
+        console.warn('⚠️ Backend connection test failed, but continuing with training attempt:', corsError);
       }
       
       const result = await trainModel(trainingParams);
-      
-      // Reset retry count on success
-      setRetryCount(0);
       
       // Set model and explainer paths if they're in the response
       if (result.model_path) {
@@ -82,58 +94,33 @@ const ModelTrainer = ({
     } catch (err) {
       console.error('API Error:', err);
       
-      // Handle specific error types
-      if (err.status === 502 || (err.message && err.message.includes('502'))) {
-        // Backend server error (Bad Gateway)
-        setErrorMessage('Backend server error (502 Bad Gateway)');
-        setErrorDetails('The server is currently experiencing issues. This may be due to high load, maintenance, or server restart.');
+      // Extract error details from the enhanced error object
+      setErrorMessage(err.message || 'Error training model');
+      
+      // Add helpful details based on error type
+      if (err.originalError) {
+        // This is our enhanced error format
+        setErrorDetails(err.details || err.originalError.message || 'Unknown error');
+        setTroubleshooting(err.troubleshooting || '');
         
-        // Attempt retry for 502 errors if we haven't exceeded the limit
-        if (retryCount < MAX_RETRIES) {
-          setErrorMessage(`Backend server error (502). Retrying... (${retryCount + 1}/${MAX_RETRIES})`);
-          setRetryCount(prev => prev + 1);
-          
-          // Retry after 3 seconds
-          setTimeout(() => {
-            handleTrainModel();
-          }, 3000);
-          return;
+        // Handle proxy-specific information
+        if (err.isProxyError) {
+          setErrorDetails(`All connection methods failed, including ${err.proxyAttempts || 'multiple'} proxy attempts`);
+          setTroubleshooting('The server might be completely unreachable or experiencing severe issues. Try again later.');
         }
-      } else if (err.isCorsError || (err.message && (
-        err.message.includes('CORS') || 
-        err.message.includes('Access-Control-Allow-Origin') ||
-        err.message.includes('cross-origin')
-      ))) {
-        // CORS error
-        setErrorMessage('Cross-Origin Request Blocked (CORS Error)');
-        setErrorDetails('The server is not allowing cross-origin requests. This is a server configuration issue that needs to be fixed on the backend.');
-      } else if (err.message && err.message.includes('timeout')) {
-        // Timeout error
-        setErrorMessage('Request Timeout');
-        setErrorDetails('The server took too long to respond. This may be due to high load or complex model training.');
-      } else if (err.status >= 400 && err.status < 500) {
-        // Client errors
-        setErrorMessage(`Client Error (${err.status})`);
-        setErrorDetails(err.data?.error || err.message || 'The request was invalid. Please check your data and try again.');
-      } else if (err.status >= 500) {
-        // Server errors
-        setErrorMessage(`Server Error (${err.status})`);
-        setErrorDetails(err.data?.error || err.message || 'The server encountered an error while processing your request.');
       } else {
-        // General error
-        setErrorMessage('Error Training Model');
-        setErrorDetails(err.message || 'An unknown error occurred while training the model.');
+        // Standard error format
+        setErrorDetails(err.details || err.message || 'Unknown error occurred');
       }
       
       // Show error message
       setShowError(true);
       
       // Notify parent component
-      onTrainingError?.(errorMessage + (errorDetails ? ': ' + errorDetails : ''));
+      const errorInfo = `${errorMessage}: ${errorDetails || ''}`;
+      onTrainingError?.(errorInfo);
     } finally {
-      if (retryCount >= MAX_RETRIES || !errorMessage.includes('Retrying')) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -156,20 +143,36 @@ const ModelTrainer = ({
 
   return (
     <>
-      <Button
-        variant="contained"
-        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-        onClick={handleTrainModel}
-        disabled={loading || !trainingParams}
-        fullWidth
-      >
-        {loading ? (retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})...` : 'Training Model...') : 'Train Model'}
-      </Button>
+      <Box sx={{ position: 'relative' }}>
+        <Button
+          variant="contained"
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+          onClick={handleTrainModel}
+          disabled={loading || !trainingParams}
+          fullWidth
+        >
+          {loading ? 'Training Model...' : 'Train Model'}
+        </Button>
+        
+        {isUsingProxy && (
+          <Chip 
+            label="Proxy Mode" 
+            color="warning" 
+            size="small" 
+            sx={{ 
+              position: 'absolute', 
+              top: -10, 
+              right: -10,
+              fontSize: '0.7rem'
+            }}
+          />
+        )}
+      </Box>
       
       {/* Error Snackbar with expanded details */}
       <Snackbar 
         open={showError} 
-        autoHideDuration={10000} 
+        autoHideDuration={15000} 
         onClose={handleCloseError}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
@@ -177,18 +180,29 @@ const ModelTrainer = ({
           onClose={handleCloseError} 
           severity="error" 
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ width: '100%', maxWidth: '500px' }}
         >
           <Typography fontWeight="bold">{errorMessage}</Typography>
+          
           {errorDetails && (
             <Box mt={1}>
               <Typography variant="body2">{errorDetails}</Typography>
-              {errorMessage.includes('502') && (
-                <Typography variant="body2" mt={1}>
-                  Try refreshing the page or coming back later. If the problem persists, 
-                  please contact support.
-                </Typography>
-              )}
+            </Box>
+          )}
+          
+          {troubleshooting && (
+            <Box mt={1}>
+              <Typography variant="body2" fontWeight="bold">Troubleshooting:</Typography>
+              <Typography variant="body2">{troubleshooting}</Typography>
+            </Box>
+          )}
+          
+          {/* Common fallback instructions for server errors */}
+          {errorMessage.includes('502') && (
+            <Box mt={1}>
+              <Typography variant="body2" fontStyle="italic">
+                Try refreshing the page or returning later when the server is available.
+              </Typography>
             </Box>
           )}
         </Alert>

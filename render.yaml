@@ -10,6 +10,20 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_BACKEND_URL
-        value: https://emotion-detector-backend-test.onrender.com
+        value: https://emotion-detector-backend.onrender.com
       - key: NODE_VERSION
-        value: 18.18.0 
+        value: 18.18.0
+    autoDeploy: true
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: "public, max-age=3600"
+    buildFilter:
+      paths:
+        - src/**
+        - public/**
+        - package.json
+        - package-lock.json
+      ignoredPaths:
+        - node_modules/**
+        - .git/** 

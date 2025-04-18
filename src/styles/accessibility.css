@@ -1,0 +1,141 @@
+/* Accessibility Styles */
+
+/* Set base font sizing to use rem instead of px to respect user font-size settings */
+html {
+  font-size: 16px; /* Default size */
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+body.dark-mode a {
+  color: #90caf9;
+}
+
+body.dark-mode a:hover {
+  color: #bbdefb;
+}
+
+/* Accessible Mode Styles */
+body.accessible-mode {
+  line-height: 1.6;
+}
+
+body.accessible-mode h1,
+body.accessible-mode h2,
+body.accessible-mode h3,
+body.accessible-mode h4,
+body.accessible-mode h5,
+body.accessible-mode h6 {
+  margin-bottom: 1em;
+}
+
+body.accessible-mode p {
+  margin-bottom: 1.5em;
+}
+
+/* Focus styles - but exclude navigation buttons */
+*:focus:not(button):not(.MuiButtonBase-root):not(a):not([role="button"]) {
+  outline: 3px solid #2196f3 !important;
+  outline-offset: 2px !important;
+}
+
+/* Navigation focus styles */
+nav *:focus, 
+header *:focus,
+.MuiButton-root:focus,
+a:focus,
+[role="button"]:focus {
+  outline: none !important;
+}
+
+/* Remove focus outlines from Material-UI elements */
+.MuiTouchRipple-root:focus,
+.MuiButtonBase-root:focus,
+.MuiListItem-root:focus,
+.MuiMenuItem-root:focus,
+.MuiIconButton-root:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Content spacing for improved readability */
+body:root {
+  --content-spacing: 100%;
+}
+
+/* Apply spacing based on the CSS variable */
+body [data-content-spacing] {
+  padding: calc(1rem * var(--content-spacing) / 100);
+  margin-bottom: calc(1rem * var(--content-spacing) / 100);
+  line-height: calc(1.5 * var(--content-spacing) / 100);
+}
+
+/* Skip to content link - hidden by default, visible on focus */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.skip-to-content:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 2px solid #0056b3;
+  color: #0056b3;
+  font-weight: bold;
+}
+
+/* Floating accessibility button styling */
+.MuiFab-root.accessibility-fab {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.MuiFab-root.accessibility-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 10px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .MuiFab-root.accessibility-fab {
+  background-color: #66ccff;
+  color: #000000;
+}
+
+body.accessible-mode .MuiFab-root.accessibility-fab {
+  background-color: #0056b3;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+/* Responsive text for better mobile viewing */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  /* Adjust the position of the fab on mobile */
+  .accessibility-fab-container {
+    bottom: 16px !important;
+    left: 16px !important;
+  }
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+} 

@@ -16,21 +16,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Get the user's ID token
-      const token = await userCredential.user.getIdToken();
-      
-      // Store the token in localStorage for API requests
-      localStorage.setItem('token', token);
-      
-      console.log('🔑 User logged in successfully, token stored in localStorage');
-      
+      await signInWithEmailAndPassword(auth, email, password);
       // Redirect to home page after successful login
       navigate('/');
     } catch (error) {
-      console.error('Login error:', error);
       setError(error.message);
     } finally {
       setLoading(false);

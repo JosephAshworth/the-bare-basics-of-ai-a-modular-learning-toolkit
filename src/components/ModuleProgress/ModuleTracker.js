@@ -65,7 +65,7 @@ const ModuleTracker = () => {
       console.log('Authentication token obtained successfully');
       
       // Request module progress from the server
-      const response = await apiService.get('/modules/progress', {
+      const response = await apiService.get('/api/modules/progress', {
         headers: {
           Authorization: `Bearer ${token}`
         }

@@ -77,8 +77,8 @@ const FileUploader = ({ onFileLoaded, onError, columnsToDiscard = [] }) => {
       } catch (error) {
         // Handle specific errors
         if (error.message && error.message.includes('Failed to fetch')) {
-          setDebugInfo('Cannot connect to backend server. Please ensure the Python backend is running at http://localhost:5000');
-          onError?.('Cannot connect to backend server. Please ensure the Python backend is running.');
+          setDebugInfo('Cannot connect to backend server. Please ensure the backend API is running.');
+          onError?.('Cannot connect to backend server. Please ensure the backend API is running.');
         } else {
           setDebugInfo(`Server error: ${error.message}`);
           onError?.(`Server error: ${error.message}`);

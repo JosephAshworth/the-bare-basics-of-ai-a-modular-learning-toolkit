@@ -31,7 +31,7 @@ const ModuleStats = () => {
       
       try {
         const token = await auth.currentUser.getIdToken();
-        const response = await apiService.get('/modules/stats', {
+        const response = await apiService.get('/api/modules/stats', {
           headers: {
             Authorization: `Bearer ${token}`
           }

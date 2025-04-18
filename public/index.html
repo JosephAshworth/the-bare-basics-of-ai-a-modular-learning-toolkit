@@ -16,6 +16,20 @@
       href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
     />
     <title>The Bare Basics of AI</title>
+    <script>
+      // Check if we came from a redirect
+      (function() {
+        var redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath) {
+          // Remove the path from sessionStorage
+          sessionStorage.removeItem('redirectPath');
+          // Push the path to the history (works with React Router)
+          var origin = window.location.origin;
+          var newUrl = origin + redirectPath;
+          window.history.replaceState(null, null, newUrl);
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

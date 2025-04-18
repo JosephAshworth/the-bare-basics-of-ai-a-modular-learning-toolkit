@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: emotion-detector-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        value: https://emotion-detector-backend.onrender.com
+      - key: NODE_VERSION
+        value: 18.18.0 

@@ -16,11 +16,21 @@ const apiInstance = axios.create({
 apiInstance.interceptors.request.use(
   (config) => {
     console.log(`🔄 API Request: ${config.method.toUpperCase()} ${config.url}`, config.data);
-    // Add auth token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    
+    // Only add auth token from localStorage if Authorization header isn't already set
+    // This ensures that method-specific auth headers take precedence
+    if (!config.headers.Authorization) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        console.log('Using token from localStorage for authentication');
+        config.headers.Authorization = `Bearer ${token}`;
+      } else {
+        console.log('No token found in localStorage and no Authorization header provided');
+      }
+    } else {
+      console.log('Using provided Authorization header');
     }
+    
     return config;
   },
   (error) => {
@@ -36,34 +46,40 @@ apiInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error('❌ Response Error:', error.response ? error.response.data : error.message);
+    if (error.response) {
+      console.error(`❌ Response Error: ${error.response.status}`, error.response.data);
+    } else {
+      console.error('❌ Network Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
 
 // API service with methods for common operations
 const apiService = {
-  // GET request
-  get: (endpoint) => apiInstance.get(endpoint),
+  // GET request with optional config
+  get: (endpoint, config) => apiInstance.get(endpoint, config),
   
-  // POST request
-  post: (endpoint, data) => apiInstance.post(endpoint, data),
+  // POST request with optional config
+  post: (endpoint, data, config) => apiInstance.post(endpoint, data, config),
   
-  // PUT request
-  put: (endpoint, data) => apiInstance.put(endpoint, data),
+  // PUT request with optional config
+  put: (endpoint, data, config) => apiInstance.put(endpoint, data, config),
   
-  // DELETE request
-  delete: (endpoint) => apiInstance.delete(endpoint),
+  // DELETE request with optional config
+  delete: (endpoint, config) => apiInstance.delete(endpoint, config),
   
   // Helper for file uploads
-  uploadFile: (endpoint, formData) => {
-    const config = {
+  uploadFile: (endpoint, formData, config = {}) => {
+    const uploadConfig = {
+      ...config,
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...config.headers
       },
     };
     console.log(`📤 Uploading file to: ${backendUrl}${endpoint}`);
-    return apiInstance.post(endpoint, formData, config);
+    return apiInstance.post(endpoint, formData, uploadConfig);
   },
   
   // Get the full URL for an endpoint
@@ -74,7 +90,7 @@ const apiService = {
   },
   
   // Special method for fuzzy logic endpoints that tries multiple path formats
-  fuzzyLogicRequest: async (endpoint, data) => {
+  fuzzyLogicRequest: async (endpoint, data, config = {}) => {
     console.log(`🧠 Fuzzy Logic Request for endpoint: ${endpoint}`);
     
     // List of endpoint variants to try
@@ -97,7 +113,7 @@ const apiService = {
     for (const variant of variants) {
       try {
         console.log(`🔄 Trying endpoint variant: ${variant}`);
-        const response = await apiInstance.post(variant, data);
+        const response = await apiInstance.post(variant, data, config);
         console.log(`✅ Successful response from ${variant}`);
         return response;
       } catch (error) {

@@ -42,7 +42,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       
       console.log(`Checking status for module: ${moduleId}`);
       
-      // Try with /api prefix first
+      // Get module progress with the correct API endpoint
       try {
         const response = await apiService.get('/api/modules/progress', {
           headers: {
@@ -60,29 +60,10 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
         } else {
           console.log(`Module ${moduleId} is not completed`);
         }
-      } catch (firstError) {
-        // Try without /api prefix
-        try {
-          console.log('Retrying without /api prefix');
-          const response = await apiService.get('/modules/progress', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
-          // Find this module in the response
-          const module = response.data.find(m => m.id === moduleId);
-          if (module && module.completed) {
-            console.log(`Module ${moduleId} is already completed`);
-            setCompleted(true);
-          } else {
-            console.log(`Module ${moduleId} is not completed`);
-          }
-        } catch (secondError) {
-          console.error(`Both API paths failed for modules progress: ${secondError.message}`);
-          // Local fallback - don't show error to user but log it
-          setSkipServerCalls(true);
-        }
+      } catch (error) {
+        console.error(`API request failed for modules progress: ${error.message}`);
+        // Local fallback - don't show error to user but log it
+        setSkipServerCalls(true);
       }
     } catch (err) {
       console.error('Error checking module status:', err);
@@ -125,7 +106,7 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
       console.log(`Using endpoint: ${endpoint} (fallback: ${useFallbackEndpoint})`);
       
       try {
-        // Send the update to the server with the first endpoint
+        // Send the update to the server with the correct endpoint
         await apiService.post(endpoint, 
           { completed: newCompleted },
           {
@@ -135,65 +116,46 @@ const CompleteModuleButton = ({ moduleId, moduleName }) => {
             timeout: 10000 // 10 second timeout
           }
         );
-      } catch (firstError) {
-        // If first endpoint fails, try without /api prefix
-        console.log('First endpoint failed, trying without /api prefix');
         
-        endpoint = useFallbackEndpoint 
-          ? `/complete-module-simple/${moduleId}`
-          : `/modules/${moduleId}/complete`;
+        // Show success message
+        setSnackbarOpen(true);
+      } catch (error) {
+        // If we haven't tried the fallback yet and got a 404 error, try the fallback endpoint
+        if (!useFallbackEndpoint && error.response && error.response.status === 404) {
+          console.log('Main endpoint failed with 404, trying fallback endpoint...');
+          setUseFallbackEndpoint(true);
+          // Try again with fallback endpoint
+          handleCompleteModule();
+          return;
+        }
         
-        // Send the update to the server with alternative endpoint
-        await apiService.post(endpoint, 
-          { completed: newCompleted },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            },
-            timeout: 10000 // 10 second timeout
-          }
-        );
+        // Handle different types of errors
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Server response error:', {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers
+          });
+          setError(`Server error: ${error.response.status} - ${error.response.data.error || 'Unknown error'}`);
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error('No response received:', error.request);
+          setError('Could not connect to the server. Your progress has been saved locally.');
+          setSkipServerCalls(true);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          setError(`Error: ${error.message}`);
+        }
+        
+        setSnackbarOpen(true);
+        throw error;
       }
-      
-      // Show success message
-      setSnackbarOpen(true);
     } catch (err) {
       console.error('Error updating module completion:', err);
-      
-      // If we haven't tried the fallback yet and got a 404 error, try the fallback endpoint
-      if (!useFallbackEndpoint && err.response && err.response.status === 404) {
-        console.log('Main endpoint failed with 404, trying fallback endpoint...');
-        setUseFallbackEndpoint(true);
-        // Try again with fallback endpoint
-        handleCompleteModule();
-        return;
-      }
-      
-      // Provide more specific error messages
-      if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Server response error:', {
-          status: err.response.status,
-          data: err.response.data,
-          headers: err.response.headers
-        });
-        setError(`Server error: ${err.response.status} - ${err.response.data.error || 'Unknown error'}`);
-      } else if (err.request) {
-        // The request was made but no response was received
-        console.error('No response received:', err.request);
-        setError('Could not connect to the server. Your progress has been saved locally.');
-        setSkipServerCalls(true);
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        setError(`Error: ${err.message}`);
-      }
-      
-      setSnackbarOpen(true);
     } finally {
-      if (!useFallbackEndpoint) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 

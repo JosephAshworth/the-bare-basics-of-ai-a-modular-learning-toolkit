@@ -43,26 +43,17 @@ const useModuleTimer = (moduleId) => {
         
         const token = await auth.currentUser.getIdToken();
         
-        // Try the API paths with and without the /api prefix
         try {
-          console.log(`Attempting to start timer for module: ${moduleId}`);
-          // Start the timer for the module
+          console.log(`Starting timer for module: ${moduleId}`);
+          // Start the timer for the module with the correct API path
           await apiService.post(`/api/modules/${moduleId}/start-timer`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
-        } catch (firstError) {
-          try {
-            console.log(`Retrying with alternate path for module: ${moduleId}`);
-            // Try alternate path
-            await apiService.post(`/modules/${moduleId}/start-timer`, {}, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          } catch (secondError) {
-            console.log(`Both timer API paths failed, will not retry for this session`);
-            // If both paths fail, don't try anymore for this session
-            setShouldSkipApiCalls(true);
-            throw secondError;
-          }
+        } catch (error) {
+          console.error(`Timer API call failed: ${error.message}`);
+          // If the API call fails, don't try anymore for this session
+          setShouldSkipApiCalls(true);
+          throw error;
         }
         
         if (isMounted) {
@@ -100,26 +91,17 @@ const useModuleTimer = (moduleId) => {
         
         const token = await auth.currentUser.getIdToken();
         
-        // Try the API paths with and without the /api prefix
         try {
-          console.log(`Attempting to stop timer for module: ${moduleId}`);
-          // Stop the timer for the module
+          console.log(`Stopping timer for module: ${moduleId}`);
+          // Stop the timer for the module with the correct API path
           await apiService.post(`/api/modules/${moduleId}/stop-timer`, {}, {
             headers: { Authorization: `Bearer ${token}` }
           });
-        } catch (firstError) {
-          try {
-            console.log(`Retrying with alternate path for module: ${moduleId}`);
-            // Try alternate path
-            await apiService.post(`/modules/${moduleId}/stop-timer`, {}, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-          } catch (secondError) {
-            console.log(`Both timer API paths failed, will not retry for this session`);
-            // If both paths fail, don't try anymore for this session
-            setShouldSkipApiCalls(true);
-            throw secondError;
-          }
+        } catch (error) {
+          console.error(`Timer API call failed: ${error.message}`);
+          // If the API call fails, don't try anymore for this session
+          setShouldSkipApiCalls(true);
+          throw error;
         }
         
         if (isMounted) {

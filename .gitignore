@@ -1,0 +1,58 @@
+# Bytecode and Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+*/venv/
+**/venv/
+
+# Logs and local databases
+*.log
+emotion_detector*.log
+*.db
+*.sqlite3
+
+# Environment configuration
+.env
+.env.local
+
+# ML model artefacts
+saved_models/
+**/saved_models/
+**/*.safetensors
+**/*.pt
+**/*.pkl
+
+# Firebase credentials
+firebase-credentials.json
+**/firebase-credentials.json
+
+# Node.js dependencies
+node_modules/
+*/node_modules/
+**/node_modules/
+package-lock.json
+yarn.lock
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build and distribution outputs
+build/
+dist/
+static/
+**/static/
+
+# IDEs and system-specific files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.bak
+*.tmp

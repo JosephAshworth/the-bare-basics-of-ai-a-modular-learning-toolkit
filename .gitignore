@@ -56,3 +56,6 @@ static/
 *.swp
 *.bak
 *.tmp
+
+# The backend folder (for frontend commits only)
+backend/

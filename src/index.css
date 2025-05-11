@@ -1,0 +1,26 @@
+/* import Tailwind's base layer (includes default styles) */
+@tailwind base;
+
+/* import Tailwind's utility classes (such as margin and padding) */
+@tailwind utilities;
+
+/* remove default spacing around the body */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* apply smooth color transitions to all elements for better UX */
+body * {
+  transition: color 0.3s ease;
+}
+
+/* apply a dyslexia-friendly font when the body has the relevant class */
+body.dyslexia-font-enabled {
+  font-family: 'Atkinson Hyperlegible'; /* accessible, legible typeface */
+}
+
+/* ensure child elements inherit the dyslexia-friendly font */
+body.dyslexia-font-enabled * {
+  font-family: inherit; 
+}

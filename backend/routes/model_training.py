@@ -23,7 +23,7 @@ from sklearn.compose import ColumnTransformer # for transforming the data
 from sklearn.pipeline import Pipeline # for creating the pipeline
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, ConfusionMatrixDisplay # for evaluating the model
 
-from utils import NumpyEncoder # for encoding the numpy arrays
+
 
 
 STATIC_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'static') # for the static folder
@@ -397,7 +397,7 @@ def train_model(data): # for the train model, this is a function that is used to
         results = { 'metrics': metrics, 'visualisation_url': visualisation_result, 'insights': insights } # set the results to the metrics, visualisation url and insights
         
         try: # try to encode the results to a json string
-            results = json.loads(json.dumps(results, cls=NumpyEncoder, default=str)) # encode the results to a json string
+            results = json.loads(json.dumps(results, default=str)) # encode the results to a json string
         except Exception as e: # if an error occurs
             print(f"Error encoding response data: {str(e)}") # print an error message to the console, that the response data could not be encoded
             traceback.print_exc() # print the traceback, this is used to print the error message and the line of code that caused the error

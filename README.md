@@ -12,6 +12,8 @@ This project provides a modular and interactive web interface for learning funda
 * **Python 3**
   Required for the backend Flask server and machine learning functionality. Download from [https://www.python.org/](https://www.python.org/)
 
+  (On the first screen, tick “Add Python to PATH”)
+
 * **pip**
   Python’s package installer (typically included with Python)
 
@@ -32,6 +34,23 @@ This project provides a modular and interactive web interface for learning funda
    ```bash
    npm install
    ```
+
+   If you get an error, try running:
+   ```bash
+   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+   and then run the installation command again.
+
+3. **Note for Windows users:**  
+
+   Some Python packages require Microsoft Visual C++ Build Tools to compile. 
+
+   If you see an error about needing "Microsoft Visual C++ 14.0 or greater," download and install the Build Tools from:  
+   https://visualstudio.microsoft.com/visual-cpp-build-tools/
+   
+   In the installer, select "Desktop development with C++" and complete the installation.  
+
+   Then restart your terminal and run the `pip install -r requirements.txt` command again.
 
 ---
 

@@ -56,13 +56,13 @@ const ModelTrainer = ({
       console.error('API Error:', err); // log the API error
       
       // Extract error information from the error object
-      const errorMsg = err.message || 'Error training model';
-      const errorDet = err.details || err.originalError?.message || 'Unknown error';
+      const errorMessage = err.message || 'Error training model';
+      const errorDetails = err.details || err.originalError?.message || 'Unknown error';
       const troubleshootingInfo = err.troubleshooting || '';
       
       // Update state with error information
-      setErrorMessage(errorMsg);
-      setErrorDetails(errorDet);
+      setErrorMessage(errorMessage);
+      setErrorDetails(errorDetails);
       setTroubleshooting(troubleshootingInfo);
       setShowError(true);
       

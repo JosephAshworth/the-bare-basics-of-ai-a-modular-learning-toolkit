@@ -73,7 +73,7 @@ const InteractiveDemo = () => {
               aria-label="model results tabs" // set the aria-label of the tabs to model results tabs
               orientation={isMobile ? 'vertical' : 'horizontal'} // set the orientation of the tabs to vertical for mobile and horizontal for desktop
               variant={'scrollable'} // set the variant of the tabs to scrollable
-              allowScrollButtonsMobile={false} // set the allowScrollButtonsMobile of the tabs to false
+              allowScrollButtonsMobile={false} // set the allowScrollButtonsMobile of the tabs to false, to disable left and right scroll buttons on mobile
               sx={{
                 width: isMobile ? '100%' : 'auto', // set the width of the tabs to 100% for mobile and auto for desktop, this is used to make the tabs take up the full width of the container
                 '.MuiTab-root': {

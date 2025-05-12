@@ -117,5 +117,5 @@ def get_available_modules(): # define the get_available_modules function
 
 
 
-if __name__ == '__main__': # if the file is run directly
-    app.run(debug=False, use_reloader=True) # run the app 
+if __name__ == '__main__':  # if the file is run directly
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=True)  # run the app

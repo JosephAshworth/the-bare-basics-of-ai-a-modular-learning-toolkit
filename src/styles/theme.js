@@ -3,7 +3,13 @@ import { createTheme } from '@mui/material/styles'; // import createTheme from M
 const baseTheme = { // base theme configuration
   typography: {
     fontFamily: [
-      'Segoe UI', // segoe UI font
+      '-apple-system', // macOS system font
+      'BlinkMacSystemFont', // macOS Safari fallback
+      'Segoe UI', // Windows
+      'Roboto', // Android/Material
+      'Helvetica Neue', // older macOS
+      'Arial', // miscellaneous font
+      'sans-serif' // miscellaneous font
     ],
     h1: {
       fontSize: '2.5rem', // font size of h1

@@ -74,6 +74,11 @@ You must run the backend server and the frontend development server in separate 
    python -m venv venv
    ```
 
+   or if on Mac try:
+   ```bash
+   python3 -m venv venv
+   ```
+
 3. **Activate the virtual environment:**
 
    * **Windows (Command Prompt):**
@@ -113,6 +118,8 @@ You must run the backend server and the frontend development server in separate 
    ```bash
    python routes/download_models.py
    ```
+
+   (Note: If you get an error during download, please follow the instructions in the alternative_models.txt file)
 
 ---
 

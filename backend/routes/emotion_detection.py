@@ -29,30 +29,55 @@ text_model = None # set the text model to None initially, it will be loaded late
 audio_extractor = None # set the audio extractor to None initially, it will be loaded later
 audio_model = None # set the audio model to None initially, it will be loaded later
 
+ENV = os.environ.get("ENVIRONMENT", "development") # determine whether the environment is production or development, and default to development if not set
+
 def load_models(): # define the load_models function to load the models
     global processor, model, text_tokenizer, text_model, audio_extractor, audio_model # set the processor, model, text tokenizer, text model, audio extractor, and audio model as global variables, so they can be used in the other functions
     
     try: # try to load the models
+        ENV = os.environ.get("ENVIRONMENT", "development") # get the environment variable, default to development
+
         if os.path.exists(FACE_MODEL_DIR) and os.path.exists(FACE_PROCESSOR_DIR): # if the facial emotion model and processor exist
-            processor = AutoImageProcessor.from_pretrained(FACE_PROCESSOR_DIR, local_files_only=True) # load the facial emotion processor
-            model = AutoModelForImageClassification.from_pretrained(FACE_MODEL_DIR, local_files_only=True) # load the facial emotion model
+            processor = AutoImageProcessor.from_pretrained(
+                FACE_PROCESSOR_DIR, # load the facial emotion processor
+                local_files_only=(ENV != "production") # load the facial emotion processor, only from local files if not in production
+            )
+            model = AutoModelForImageClassification.from_pretrained(
+                FACE_MODEL_DIR, # load the facial emotion model
+                local_files_only=(ENV != "production") # load the facial emotion model, only from local files if not in production
+            )
         else: # if the facial emotion model and processor do not exist
             error_msg = f"Face emotion model not found in {FACE_MODEL_DIR}. Please run download_models.py first." # return an error message
             raise FileNotFoundError(error_msg) # raise an error
-        
+
         if os.path.exists(TEXT_MODEL_DIR) and os.path.exists(TEXT_TOKENIZER_DIR): # if the text emotion model and tokenizer exist
-            text_tokenizer = AutoTokenizer.from_pretrained(TEXT_TOKENIZER_DIR, local_files_only=True) # load the text emotion tokenizer
-            text_model = AutoModelForSequenceClassification.from_pretrained(TEXT_MODEL_DIR, local_files_only=True) # load the text emotion model
+            text_tokenizer = AutoTokenizer.from_pretrained(
+                TEXT_TOKENIZER_DIR, # load the text emotion tokenizer
+                local_files_only=(ENV != "production"), # only load the tokenizer from local files if not in production
+                use_fast=(ENV == "production") # prevents tokenizer.json from being used in development
+            )
+            text_model = AutoModelForSequenceClassification.from_pretrained(
+                TEXT_MODEL_DIR, # load the text emotion model
+                local_files_only=(ENV != "production") # only load the model from local files if not in production
+            )
         else: # if the text emotion model and tokenizer do not exist
             error_msg = f"Text emotion model not found in {TEXT_MODEL_DIR}. Please run download_models.py first." # return an error message
             raise FileNotFoundError(error_msg) # raise an error
-        
+
         if os.path.exists(AUDIO_MODEL_DIR) and os.path.exists(AUDIO_EXTRACTOR_DIR): # if the audio emotion model and extractor exist
-            audio_extractor = AutoFeatureExtractor.from_pretrained(AUDIO_EXTRACTOR_DIR, local_files_only=True) # load the audio emotion extractor
-            audio_model = AutoModelForAudioClassification.from_pretrained(AUDIO_MODEL_DIR, local_files_only=True) # load the audio emotion model
+            audio_extractor = AutoFeatureExtractor.from_pretrained(
+                AUDIO_EXTRACTOR_DIR, # load the audio emotion extractor
+                local_files_only=(ENV != "production") # only load the extractor from local files if not in production
+            )
+            audio_model = AutoModelForAudioClassification.from_pretrained(
+                AUDIO_MODEL_DIR, # load the audio emotion model
+                local_files_only=(ENV != "production"), # only load the model from local files if not in production
+                use_safetensors=True # explicitly use the .safetensors file
+            )
         else: # if the audio emotion model and extractor do not exist
             error_msg = f"Audio emotion model not found in {AUDIO_MODEL_DIR}. Please run download_models.py first." # return an error message
             raise FileNotFoundError(error_msg) # raise an error
+
 
     except FileNotFoundError as e: # if a file is not found
         raise e # raise an error

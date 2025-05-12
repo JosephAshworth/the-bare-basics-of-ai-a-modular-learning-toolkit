@@ -1,8 +1,7 @@
 import
   { createContext, // import createContext from React, this is used to create a context object for the theme
     useState, // import useState from React, this is used to manage state in functional components
-    useContext, // import useContext from React, this is used to access the context object
-    useEffect // import useEffect from React, this is used to manage side effects in functional components
+    useContext // import useContext from React, this is used to access the context object
   } from 'react';
 
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'; // import the ThemeProvider as MuiThemeProvider from @mui/material/styles, which is used to provide the themes to the app
@@ -90,22 +89,7 @@ export const ThemeProvider = ({ children }) => { // create the ThemeProvider com
   };
 
 
-  useEffect(() => {
-    changeTheme(theme); // change the theme
-    
-    document.documentElement.style.fontSize = `${fontSize}%`; // set the font size to the new size
-    
-    document.documentElement.style.setProperty('--content-spacing', `${contentSpacing}%`); // set the content spacing to the new spacing
 
-    if (useDyslexiaFont) { // if the use dyslexia font is true
-      document.body.classList.add('dyslexia-font-enabled'); // add the dyslexia font enabled class to the body
-    } else { // if the use dyslexia font is false
-      document.body.classList.remove('dyslexia-font-enabled'); // remove the dyslexia font enabled class from the body
-    }
-    
-    const rootStyle = document.documentElement.style; // set the root style to the document element style
-    rootStyle.setProperty('--content-spacing', `${contentSpacing}%`); // set the content spacing to the new spacing
-  }, [theme, fontSize, contentSpacing, useDyslexiaFont]); // use the theme, font size, content spacing and use dyslexia font as dependencies
 
   const getThemeObject = () => { // get the theme object
     switch (theme) { // switch the theme
@@ -123,13 +107,13 @@ export const ThemeProvider = ({ children }) => { // create the ThemeProvider com
       value={{ // set the value of the context object
         theme, // the theme
         changeTheme, // the change theme function
-        fontSize, // the font size
+        fontSize, // get the font size
         changeFontSize, // the change font size function
         contentSpacing, // the content spacing
         changeContentSpacing, // the change content spacing function
         themes, // the themes
-        useDyslexiaFont, // the use dyslexia font
-        toggleDyslexiaFont, // the toggle dyslexia font function
+        useDyslexiaFont, // whether to use the dyslexia font
+        toggleDyslexiaFont // the toggle dyslexia font function
       }}
     >
       <MuiThemeProvider theme={getThemeObject()}> {/* provide the theme to the app */}

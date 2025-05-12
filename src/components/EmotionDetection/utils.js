@@ -55,8 +55,8 @@ export const detectFaceEmotions = async (imageFile, setLoading, setError, setEmo
 
   try { // try to detect the emotions from the face
     console.log(`Detecting face emotions for file: ${imageFile.name}`); // log the name of the image file
-    setLoading && setLoading(true); // set the loading state to true
-    setError && setError(null); // set the error state to null
+    setLoading(true); // set the loading state to true
+    setError(null); // set the error state to null
     
     const formData = new FormData(); // create a new form data object
     formData.append('image', imageFile); // append the image file to the form data
@@ -65,7 +65,7 @@ export const detectFaceEmotions = async (imageFile, setLoading, setError, setEmo
     const response = await apiService.uploadFile('/api/detect-emotion', formData); // send the form data to the backend
     
     console.log('Face emotion detection successful:', response.data); // log the message
-    setEmotions && setEmotions(response.data.predictions || []); // set the emotions to the response data
+    setEmotions(response.data.predictions || []); // set the emotions to the response data
     return response.data; // return the response data
   } catch (error) { // catch the error
     console.error('Face emotion detection failed:', error); // log the error
@@ -79,9 +79,9 @@ export const detectFaceEmotions = async (imageFile, setLoading, setError, setEmo
       console.error('Error details:', error.message); // log the error details
     }
     
-    setError && setError('Failed to detect emotions. Please make sure the backend server is running.'); // set the error to the message
+    setError('Failed to detect emotions. Please make sure the backend server is running.'); // set the error to the message
   } finally {
-    setLoading && setLoading(false); // set the loading state to false
+    setLoading(false); // set the loading state to false
   }
 };
 
@@ -92,14 +92,14 @@ export const detectTextEmotions = async (text, setLoading, setError, setEmotions
 
   try { // try to detect the emotions from the text
     console.log(`Detecting text emotions for: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`); // log the text
-    setLoading && setLoading(true); // set the loading state to true
-    setError && setError(null); // set the error state to null
+    setLoading(true); // set the loading state to true
+    setError(null); // set the error state to null
     
     console.log('Sending text to backend for emotion detection...'); // log the message
     const response = await apiService.post('/api/detect-text-emotion', { text }); // send the text to the backend
     
     console.log('Text emotion detection successful:', response.data); // log the message
-    setEmotions && setEmotions(response.data.predictions || []); // set the emotions to the response data
+    setEmotions(response.data.predictions || []); // set the emotions to the response data
     return response.data; // return the response data
   } catch (error) { // catch the error
     console.error('Text emotion detection failed:', error); // log the error
@@ -113,9 +113,9 @@ export const detectTextEmotions = async (text, setLoading, setError, setEmotions
       console.error('Error details:', error.message); // log the error details
     }
     
-    setError && setError('Failed to detect emotions. Please make sure the backend server is running.'); // set the error to the message
+    setError('Failed to detect emotions. Please make sure the backend server is running.'); // set the error to the message
   } finally {
-    setLoading && setLoading(false); // set the loading state to false
+    setLoading(false); // set the loading state to false
   }
 };
 
@@ -126,8 +126,8 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
 
   try { // try to detect the emotions from the audio
     console.log(`Detecting audio emotions for file: ${audioFile.name} (type: ${audioFile.type}, size: ${audioFile.size} bytes)`); // log the message
-    setLoading && setLoading(true); // set the loading state to true
-    setError && setError(null); // set the error state to null
+    setLoading(true); // set the loading state to true
+    setError(null); // set the error state to null
     
     const fileExtension = audioFile.name.split('.').pop().toLowerCase(); // get the file extension of the audio file
     const isCommonFormat = ['wav', 'mp3', 'ogg', 'webm', 'm4a', 'mpeg'].includes(fileExtension); // check if the file extension is a common format
@@ -158,7 +158,7 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
     const response = await apiService.uploadFile('/api/detect-audio-emotion', formData); // send the form data to the backend
     
     console.log('Audio emotion detection successful:', response.data); // log the message
-    setEmotions && setEmotions(response.data.predictions || []); // set the emotions to the response data
+    setEmotions(response.data.predictions || []); // set the emotions to the response data
     return response.data; // return the response data
   } catch (error) { // catch the error
     console.error('Audio emotion detection failed:', error); // log the error
@@ -170,7 +170,7 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
       if (error.response.data && error.response.data.error) { // if the error response data is found
         const errorMsg = error.response.data.error; // set the error message to the error response data
         const details = error.response.data.details || ''; // set the details to the error response data
-        setError && setError(`${errorMsg} ${details}`); // set the error to the message
+        setError(`${errorMsg} ${details}`); // set the error to the message
       }
     } else if (error.request) { // if the error request is found
       console.error('No response received. Make sure the backend is running.'); // log the message
@@ -179,8 +179,8 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
       console.error('Error details:', error.message); // log the error details
     }
     
-    setError && setError('Failed to detect emotions. Please make sure the backend server is running and try a different audio file format like WAV or MP3.'); // set the error to the message
+    setError('Failed to detect emotions. Please make sure the backend server is running and try a different audio file format like WAV or MP3.'); // set the error to the message
   } finally {
-    setLoading && setLoading(false); // set the loading state to false
+    setLoading(false); // set the loading state to false
   }
 };

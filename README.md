@@ -181,7 +181,7 @@ To enable Firebase functionality on the backend:
 
    7. Paste the configuration object into that file, replacing all placeholders with your actual values.
 
-   8. Create a `.env` file in `src/` with the following content:
+   8. Create a `.env` file in the root directory with the following content:
 
       ```
       REACT_APP_USE_LOCAL_FIREBASE_CREDENTIALS=true
@@ -194,8 +194,6 @@ To enable Firebase functionality on the backend:
    ```bash
    npm run start:frontend
    ```
-
-   If it is the first time running, node_modules will be installed for React to work.
 
    This should open the application in your browser. If not, navigate to the 'local' port shown in the terminal, which is usually:
 

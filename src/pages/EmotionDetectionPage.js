@@ -79,7 +79,7 @@ const EmotionDetectionPage = () => {
       background: theme.palette.background.default // set the background to the default background colour based on the theme
     }}>
     
-      <Container maxWidth="lg" sx={{ py: 4 }}> {/* set the container to have a maximum width of lg, and a padding of 4 */}
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <HeroSection /> {/* render the HeroSection component */}
 
         <EmotionDetectionExplanation /> {/* render the EmotionDetectionExplanation component */}
@@ -97,7 +97,7 @@ const EmotionDetectionPage = () => {
 
 
         <Container 
-          maxWidth="lg" // set the maximum width
+          maxWidth="lg"
           sx={{
             p: 4, // set the padding to 4, adding space inside the container
             borderRadius: '16px', // set the border radius to 16px, creating a rounded container

@@ -20,7 +20,6 @@ import {
 const ModelTrainer = ({  
   trainingParams, // the training parameters for the model
   onTrainingComplete, // the function to call when the training is complete
-  onTrainingError, // the function to call when the training fails
   onTrainingStart, // the function to call when the training starts
   targetCorrections, // the target corrections for the model
   targetFeature, // the target feature for the model
@@ -67,13 +66,7 @@ const ModelTrainer = ({
       setTroubleshooting(troubleshootingInfo);
       setShowError(true);
       
-      // Call the error callback with formatted error information
-      const errorInfo = {
-        message: errorMsg,
-        details: errorDet,
-        troubleshooting: troubleshootingInfo
-      };
-      onTrainingError?.(errorInfo);
+
     } finally {
       setLoading(false); // set the loading state to false
     }

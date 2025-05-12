@@ -212,7 +212,7 @@ const FeatureSection = () => {
       justifyContent: 'center', // set the justify content of the box to centre, this centres the box horizontally
       py: 8 // set the padding y of the box to 8, this adds space between the box and the top and bottom of the page
     }}>
-      <Container maxWidth="lg"> {/* set the max width of the container to lg, this allows the container to be responsive */}
+      <Container maxWidth="lg">
         <Box sx={{ mb: 6 }}> {/* set the margin bottom of the box to 6, this adds space between the box and the bottom of the page */}
           <Typography 
             variant="h3" // set the variant of the typography to h3, this sets the size of the text

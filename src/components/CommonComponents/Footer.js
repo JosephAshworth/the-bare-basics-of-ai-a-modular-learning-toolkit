@@ -17,7 +17,7 @@ function Footer() {
         bgcolor: theme.palette.background.default // set the background colour of the box to the default background colour of the theme
       }}
     >
-      <Container maxWidth="lg"> {/* set the max width of the container to lg, which sets the width of the container to the width of the screen */}
+      <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center' }}> {/* set the text alignment of the box to centre, which centres the text */}
             <Typography
               variant="h6" // set the variant of the text to h6, which is the size of the text

@@ -141,7 +141,7 @@ function ProfilePage() {
       minHeight: '100vh', // set the minimum height of the box to 100vh, so the page takes up the full height of the screen
       bgcolor: theme.palette.background.default // set the background color of the box to the default background color based on the theme
     }}>
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}> {/* sets the container to have a maximum width of md, and a margin top and bottom of 4 */}
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
         <Paper 
           elevation={3} // sets the elevation of the paper to 3, which is a shadow effect
           sx={{ 

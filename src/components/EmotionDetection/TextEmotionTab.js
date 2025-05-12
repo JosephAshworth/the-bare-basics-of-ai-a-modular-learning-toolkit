@@ -96,21 +96,14 @@ const TextEmotionTab = () => {
               <Box 
                 sx={{
                   position: 'absolute', // set the position of the box to absolute
-                  top: 0, // set the top of the box to 0, this is used to create a box
-                  left: 0, // set the left of the box to 0, this is used to create a box
                   width: '100%', // set the width of the box to 100%, this makes the box take up the remaining space in the paper
                   height: '100%', // set the height of the box to 100%, this makes the box take up the remaining space in the paper
                   display: 'flex', // set the display of the box to flex, this allows the box to be flexed
                   flexDirection: 'column', // set the flex direction of the box to column, this allows the box to be flexed vertically
                   alignItems: 'center', // set the align items of the box to centre, this centres the box
                   justifyContent: 'center', // set the justify content of the box to centre, this centres the box
-                  p: 2, // set the padding of the box to 2, this adds space inside the box
                   color: theme.palette.text.secondary, // set the colour of the box to the secondary colour of the theme
-                  pointerEvents: 'none', // set the pointer events of the box to none, this prevents the box from being interactive
-                  border: '1px solid', // set the border of the box to 1px solid, this creates a border around the box
-                  borderColor: theme.palette.divider, // set the border colour of the box to the divider colour of the theme
-                  borderRadius: '4px', // set the border radius of the box to 4px, this creates a rounded box
-                  textAlign: 'center' // set the text align of the box to centre, this centres the text inside the box
+                  borderRadius: '4px' // set the border radius of the box to 4px, this creates a rounded box
                 }}
               >
                 <TextFieldsIcon sx={{ 

@@ -60,7 +60,7 @@ const LightComfortScenario = () => {
           colour_temp: colourTemp // send the colour temperature value
         });
         setLightComfortResult(response.data.result); // set the light comfort result to the response data result
-      } catch (apiError) { // catch the API error
+      } catch (apiError) { // catch the API error (if the initial attempt fails)
         console.log('Retrying without /api prefix...', apiError); // log the retry without the /api prefix
 
         const response = await apiService.post('/fuzzy-logic/light-comfort', { // make a POST request to the /fuzzy-logic/light-comfort endpoint,

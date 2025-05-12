@@ -121,8 +121,7 @@ const FaceEmotionTab = () => {
               minHeight: '300px', // set the minimum height of the box to 300px
               backgroundColor: theme.palette.background.default, // set the background colour of the box to the default colour of the theme
               cursor: 'pointer', // set the cursor of the box to pointer, this is used to indicate that the box is clickable
-              mb: 3, // set the margin bottom of the box to 3, this adds space below the box
-              flex: 1 // set the flex of the box to 1, this makes the box take up the remaining space in the paper
+              mb: 3 // set the margin bottom of the box to 3, this adds space below the box
             }}
             onClick={handleUploadClick} // for handling the upload click event
           >

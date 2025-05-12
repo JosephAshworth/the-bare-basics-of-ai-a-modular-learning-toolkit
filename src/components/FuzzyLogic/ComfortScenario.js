@@ -60,7 +60,7 @@ const ComfortScenario = () => {
           humidity // for sending the humidity to the backend
         });
         setComfortResult(response.data.result); // for setting the comfort result to the response data result
-      } catch (apiError) { // for catching the API error
+      } catch (apiError) { // for catching the API error (if the initial attempt fails)
         console.log('Retrying without /api prefix...', apiError); // for logging the retry without the /api prefix
         
         const response = await apiService.post('/fuzzy-logic/comfort', { // for making the API request to the backend

@@ -97,7 +97,7 @@ const PlantCareScenario = () => {
         console.log('Attempting to calculate plant care with /api prefix...'); // log the attempt to calculate plant care with the /api prefix
         const response = await apiService.post('/api/fuzzy-logic/plant-care', requestData); // make a POST request to the /api/fuzzy-logic/plant-care endpoint, with the request data
         setPlantCareResult(response.data); // set the plant care result to the response data
-      } catch (apiError) { // catch the API error
+      } catch (apiError) { // catch the API error (if the initial attempt fails)
         console.log('Retrying without /api prefix...', apiError); // log the error
         const response = await apiService.post('/fuzzy-logic/plant-care', requestData); // make a POST request to the /fuzzy-logic/plant-care endpoint, with the request data
         setPlantCareResult(response.data); // set the plant care result to the response data

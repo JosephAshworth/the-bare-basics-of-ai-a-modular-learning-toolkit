@@ -23,7 +23,7 @@ const HeroSection = () => {
         position: 'relative', // for setting the position of the box to relative, this allows the box to be positioned relative to its normal position
         overflow: 'hidden' // for setting the overflow of the box to hidden, this hides any content that overflows the box
     }}>
-      <Container maxWidth="lg"> {/* create a container component with a max width of lg, this is used to contain the content of the hero section */}
+      <Container maxWidth="lg">
         <Grid container spacing={6} alignItems="center"> {/* create a grid component with a spacing of 6 and aligning the items to the centre, this is used to create a grid layout */}
           <Grid item xs={12} md={6}> {/* create a grid item component with a width of 12 on small screens and 6 on medium screens, this is used to create a grid layout */}
             <Box sx={{ textAlign: 'center' }}> {/* create a box component with a text alignment of centre, this is used to centre the content of the box */}

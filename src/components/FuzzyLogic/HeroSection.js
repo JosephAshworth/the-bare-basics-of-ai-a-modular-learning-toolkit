@@ -24,7 +24,7 @@ const HeroSection = () => {
     }}>
 
       <Container
-        maxWidth="lg" // set the max width of the container to lg
+        maxWidth="lg"
         sx={{ 
           position: 'relative' // set the position of the container to relative, this is used to position the container relative to the box
         }}

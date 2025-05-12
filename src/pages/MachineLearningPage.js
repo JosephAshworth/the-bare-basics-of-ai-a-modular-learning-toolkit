@@ -156,7 +156,7 @@ const MachineLearningPage = () => {
     customData, // set the custom data to the custom data
     targetFeature, // set the target feature to the target feature
     selectedFeatures, // set the selected features to the selected features
-    targetWarning: targetWarning // set the target warning to the target warning
+    targetWarning // set the target warning to the target warning
   };
 
   const handleDatasetChange = (newDataset) => {
@@ -219,7 +219,7 @@ const MachineLearningPage = () => {
 
       <HeroSection /> {/* display the HeroSection component */}
 
-      <Container maxWidth="lg" sx={{ py: 4 }}> {/* set the maximum width of the container to lg, and the padding top to 4, adding space above the container */}
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <MachineLearningExplanation /> {/* display the MachineLearningExplanation component */}
       </Container>
 
@@ -234,7 +234,7 @@ const MachineLearningPage = () => {
         Have a go at training your own models below
       </Typography>
 
-      <Container maxWidth="xl"> {/* set the maximum width of the container to xl */}
+      <Container maxWidth="xl">
         <Grid container spacing={3}> {/* sets the container to a grid container with a spacing of 3 */}
           <Grid item xs={12}> {/* sets the grid item to occupy all 12 columns on extra-small screens and up, making it full width */}
             <Paper elevation={3} sx={{ p: 3, height: '100%' }}> {/* sets the paper to have a paper elevation of 3, padding of 3, and a height of 100% */}

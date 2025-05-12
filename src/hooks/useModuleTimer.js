@@ -123,9 +123,8 @@ const useModuleTimer = (moduleId) => { // define the useModuleTimer hook, which 
         console.warn(`[${moduleId}] Failed to read session storage:`, e) // log the error
     }
 
-    const initialTime = Math.max(contextTime, sessionTime); // set the initial time to the maximum of the context time and the session time
-    console.log(`[${moduleId}] Initialising timer with max(context, session): ${initialTime}s`); // log the initial time
-    setElapsedSeconds(initialTime); // set the elapsed seconds to the initial time
+
+
     
     if (document.visibilityState === 'visible') { // if the page is visible
        console.log(`[${moduleId}] Starting timer on mount (visible).`); // log the start of the timer

@@ -33,7 +33,7 @@ const InteractiveDemo = () => {
     <Box sx={{ 
       py: 8 // set the padding of the box to 8, to add space between the top and the interactive demo
     }}>
-      <Container maxWidth="lg"> {/* set the max width of the container to lg, this is used to centre the container */}
+      <Container maxWidth="lg">
         <Typography
           variant="h1" // set the variant of the typography to h1
           sx={{ 
@@ -52,7 +52,7 @@ const InteractiveDemo = () => {
             p: 4, // set the padding of the paper to 4
             borderRadius: '16px', // set the border radius of the paper to 16px
             maxWidth: '900px', // set the max width of the paper to 900px
-            margin: '0 auto', // set the margin of the paper to 0 auto
+            margin: '0 auto', // set the margin of the paper to 0 auto, to centre the paper
             backgroundColor: theme.palette.background.paper, // set the background colour of the paper to the background colour of the theme
             boxShadow: theme.shadows[isDarkMode ? 8 : 2] // set the box shadow of the paper to the box shadow of the theme
           }}

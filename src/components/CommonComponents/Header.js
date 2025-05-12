@@ -214,7 +214,7 @@ function Header() {
                       left: 0, // for setting the left of the underline to 0 to ensure the underline is at the left of the button
                       width: '100%', // for setting the width of the underline to 100% to ensure the underline is the width of the button
                       height: '2px', // for setting the height of the underline to 2px to ensure the underline is not too tall
-                      backgroundColor: theme.palette.primary.main, // for setting the background colour of the underline to the primary colour of the theme
+                      backgroundColor: theme.palette.text.primary, // for setting the background colour of the underline to the primary text colour of the theme
                     } : {},
                     '&:hover': { // for setting the hover pseudo-element of the button, which happens when the button is hovered over
                       backgroundColor: theme.palette.action.hover // for setting the background colour of the button to the hover colour of the theme
@@ -305,7 +305,7 @@ function Header() {
                   href={isExternal ? item.path : undefined} // for setting the href of the list item to the path of the item if it is an external link and undefined if it is an internal link
                   to={!isExternal ? item.path : undefined} // for setting the to of the list item to the path of the item if it is an internal link and undefined if it is an external link
                   target={isExternal ? '_blank' : undefined} // for setting the target of the list item to '_blank' for external links and undefined if it is an internal link
-                  rel={isExternal ? 'noopener noreferrer' : undefined} // for setting the rel of the list item to 'noopener noreferrer' for external links and undefined if it is an internal link, this is used to prevent the page from being opened in a new tab
+                  rel={isExternal ? 'noopener noreferrer' : undefined} // for setting the rel of the list item to 'noopener noreferrer' for external links and undefined if it is an internal link
                   onClick={handleDrawerClose} // for setting the onClick event of the list item to handleDrawerClose, which is used to close the drawer
                   sx={commonListItemSx} // for setting the sx (styles) of the list item to the commonListItemSx
                 >

@@ -64,7 +64,6 @@ function ProfilePage() {
     progressData, // get the progress data from the progress context
     isLoading: isProgressLoading, // get the loading status from the progress context
     error: progressError, // get the error from the progress context
-    fetchProgress, // get the fetchProgress function from the progress context
     resetAllModuleTimes, // get the resetAllModuleTimes function from the progress context
   } = useProgress(); // destructure the progress data from the progress context
 
@@ -96,17 +95,7 @@ function ProfilePage() {
     fetchModules(); // fetch the modules
   }, []);
 
-  useEffect(() => {
-      fetchProgress(); // fetch the progress
-  }, [fetchProgress]);
 
-  useEffect(() => {
-      const timerId = setTimeout(() => {
-        fetchProgress(); // fetch the progress
-      }, 1200); // delay the fetchProgress function by 1200 milliseconds
-
-      return () => clearTimeout(timerId); // return a cleanup function to clear the timeout
-  }, [fetchProgress]);
 
   useEffect(() => {
       console.log("ProfilePage Effect: progressData updated:", progressData); // log the progress data

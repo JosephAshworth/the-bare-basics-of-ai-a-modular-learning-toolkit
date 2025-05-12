@@ -8,16 +8,16 @@ progress_bp = Blueprint('progress_bp', __name__) # for the progress blueprint, t
 @progress_bp.route('/api/modules/progress', methods=['GET']) # for the get module progress route, this is used to get the module progress of the user
 def get_module_progress(): # define the get_module_progress function
     try:
-         if not firebase_admin._apps: # if the firebase admin is not initialised
-             print("Firebase not initialised in get_module_progress") # print the error message
-             return jsonify({"error": "Firebase connection not ready"}), 503 # return the error message and 503 status code
-         db = firestore.client() # get the firestore client
+        if not firebase_admin._apps: # if the firebase admin is not initialised
+            print("Firebase not initialised in get_module_progress") # print the error message
+            return jsonify({"error": "Firebase connection not ready"}), 503 # return the error message and 503 status code
+        db = firestore.client() # get the firestore client
     except Exception as init_err: # if an error occurs
-         print(f"Error getting Firestore client in get_module_progress: {init_err}") # print the error message
-         return jsonify({"error": "Database connection error"}), 503 # return the error message and 503 status code
+        print(f"Error getting Firestore client in get_module_progress: {init_err}") # print the error message
+        return jsonify({"error": "Database connection error"}), 503 # return the error message and 503 status code
     
     auth_header = request.headers.get('Authorization') # get the authorisation header
-    print(f"Progress Endpoint: Received Authorisation header: {auth_header}") # print the authorisation header
+    print(f"Progress Endpoint: Received Authorisation header") # print the authorisation header
     
     try: # try to get the id token
         id_token = "" # initialise the id token as an empty string
@@ -28,11 +28,11 @@ def get_module_progress(): # define the get_module_progress function
             print("Progress Endpoint: No token found in header.") # print the error message
             return jsonify({"error": "Authorisation token required"}), 401 # return the error message and 401 status code
         
-        print(f"Progress Endpoint: Attempting to verify token starting with: {id_token[:15]}...") # print the id token, the first 15 characters
+        print(f"Progress Endpoint: Attempting to verify token") # print the id token, the first 15 characters
         
         decoded_token = firebase_admin.auth.verify_id_token(id_token) # verify the id token
         user_uid = decoded_token['uid'] # get the user id
-        print(f"Progress Endpoint: Token verified for user: {user_uid}") # print the user id
+        print(f"Progress Endpoint: Token verified") # print the user id
 
         available_modules = [] # initialise the available modules as an empty list
         try: # try to get the available modules
@@ -54,18 +54,18 @@ def get_module_progress(): # define the get_module_progress function
             user_modules_subcollection_ref = db.collection('user_progress').document(user_uid).collection('modules') # get the user modules subcollection reference, this is the subcollection of the user progress document
             progress_docs = user_modules_subcollection_ref.stream() # get the stream of documents
             
-            print(f"User {user_uid}: Iterating progress subcollection...") # print the user id and the iteration of the progress subcollection
+            print(f"Iterating progress subcollection...") # print the user id and the iteration of the progress subcollection
             for doc in progress_docs: # iterate through the documents
                 progress_doc_data = doc.to_dict() # get the progress document data
                 retrieved_time = progress_doc_data.get('timeSpent', None) # get the time spent
-                print(f"  -> Module {doc.id}: Raw doc data = {progress_doc_data}, Retrieved timeSpent = {retrieved_time}") # print the module id, the raw document data and the retrieved time spent
+                print(f"Module {doc.id}: Raw doc data = {progress_doc_data}, Retrieved timeSpent = {retrieved_time}") # print the module id, the raw document data and the retrieved time spent
                 user_progress_data[doc.id] = {
                      'completed': progress_doc_data.get('completed', False), # get the completed status
                      'timeSpent': int(retrieved_time) if retrieved_time is not None else 0 # get the time spent
                  }
-            print(f"User {user_uid} progress subcollection data (processed): {user_progress_data}") # print the user id and the processed progress subcollection data
+            print(f"Progress subcollection data (processed): {user_progress_data}") # print the user id and the processed progress subcollection data
         except Exception as e_prog: # if an error occurs
-            print(f"Error fetching progress subcollection for user {user_uid}: {e_prog}") # print the error message
+            print(f"Error fetching progress subcollection: {e_prog}") # print the error message
             return jsonify({"error": "Failed to retrieve user progress data"}), 500 # return the error message and 500 status code
         
 
@@ -83,7 +83,7 @@ def get_module_progress(): # define the get_module_progress function
             else: # if the module id is None
                  print(f"Module definition missing id: {module}") # print the error message
 
-        print(f"Returning progress data for user {user_uid}: {len(response_data)} modules") # print the user id and the number of modules
+        print(f"Returning progress data: {len(response_data)} modules") # print the user id and the number of modules
         return jsonify(response_data), 200 # return the response data and 200 status code
 
     except auth.InvalidIdTokenError as e: # if an error occurs
@@ -93,7 +93,7 @@ def get_module_progress(): # define the get_module_progress function
         print(f"Progress Endpoint: Expired Firebase ID token received: {e}") # print the error message
         return jsonify({"error": "Authorisation token expired"}), 401 # return the error message and 401 status code
     except Exception as e: # if an error occurs
-        print(f"Progress Endpoint: Error fetching progress for user {user_uid if 'user_uid' in locals() else 'unknown'}: {e}") # print the error message
+        print(f"Progress Endpoint: Error fetching progress: {e}") # print the error message
         return jsonify({"error": "An unexpected error occurred fetching progress."}), 500 # return the error message and 500 status code
 
 @progress_bp.route('/api/modules/<string:moduleId>/complete', methods=['POST']) # for the set module completion route, this is used to set the module completion status
@@ -106,7 +106,7 @@ def set_module_completion(moduleId): # define the set_module_completion function
 
         decoded_token = firebase_admin.auth.verify_id_token(id_token) # verify the id token
         user_uid = decoded_token['uid'] # get the user id
-        print(f"Setting completion status for module {moduleId} for user {user_uid}") # print the module id and the user id
+        print(f"Setting completion status for module {moduleId} for user") # print the module id and the user id
 
         data = request.get_json() # get the data
         if data is None or 'completed' not in data: # if the data is empty or the completed status is not in the data
@@ -121,7 +121,7 @@ def set_module_completion(moduleId): # define the set_module_completion function
             'updatedAt': firestore.SERVER_TIMESTAMP # set the updated at time
         }, merge=True) # merge the data
 
-        print(f"Successfully set module {moduleId} completed={completed_status} for user {user_uid}") # print the module id, the completed status and the user id
+        print(f"Successfully set module {moduleId} completed={completed_status}") # print the module id, the completed status and the user id
         return jsonify({"success": True, "moduleId": moduleId, "completed": completed_status}), 200 # return the success message, the module id and the completed status and 200 status code
 
     except auth.InvalidIdTokenError: # if an error occurs
@@ -131,7 +131,7 @@ def set_module_completion(moduleId): # define the set_module_completion function
          print("Expired Firebase ID token received for set completion.") # print the error message
          return jsonify({"error": "Authorisation token expired"}), 401 # return the error message and 401 status code
     except Exception as e: # if an error occurs
-        print(f"Error setting module completion for user {user_uid if 'user_uid' in locals() else 'unknown'}, module {moduleId}: {e}") # print the error message
+        print(f"Error setting module completion, module {moduleId}: {e}") # print the error message
         return jsonify({"error": "An unexpected error occurred setting completion status."}), 500 # return the error message and 500 status code
 
 @progress_bp.route('/api/modules/<string:moduleId>/update-time', methods=['POST']) # for the update module time route, this is used to update the module time
@@ -144,7 +144,7 @@ def update_module_time(moduleId): # define the update_module_time function
             return jsonify({"error": "Authorisation token required"}), 401 # return the error message and 401 status code
         decoded_token = firebase_admin.auth.verify_id_token(id_token) # verify the id token
         user_uid = decoded_token['uid'] # get the user id
-        print(f"Update Time Endpoint: Request for module {moduleId} for user {user_uid}") # print the module id and the user id
+        print(f"Update Time Endpoint: Request for module {moduleId}") # print the module id and the user id
 
         data = request.get_json() # get the data
         if data is None or 'seconds' not in data: # if the data is empty or the seconds are not in the data
@@ -174,7 +174,7 @@ def update_module_time(moduleId): # define the update_module_time function
                 'timeSpent': firestore.Increment(seconds_to_add), # set the time spent to the seconds to add
                 'lastUpdatedTime': firestore.SERVER_TIMESTAMP # set the last updated time to the server timestamp
             }, merge=True) # merge the data
-            print(f"Update Time Endpoint: Successfully called Firestore set/increment for module {moduleId} by {seconds_to_add}s for user {user_uid}") # print the module id, the seconds to add and the user id
+            print(f"Update Time Endpoint: Successfully called Firestore set/increment for module {moduleId} by {seconds_to_add}s") # print the module id, the seconds to add and the user id
         except Exception as db_error: # if an error occurs
             print(f"Update Time Endpoint: DATABASE ERROR during set/increment for module {moduleId}: {db_error}") # print the error message
             return jsonify({"error": "Database error during time update."}), 500 # return the error message and 500 status code
@@ -188,7 +188,7 @@ def update_module_time(moduleId): # define the update_module_time function
          print(f"Update Time Endpoint: Expired Firebase ID token received (module: {moduleId}).") # print the error message
          return jsonify({"error": "Authorisation token expired"}), 401 # return the error message and 401 status code
     except Exception as e: # if an error occurs
-        print(f"Update Time Endpoint: General error for user {user_uid}, module {moduleId}: {e}") # print the error message
+        print(f"Update Time Endpoint: General error for module {moduleId}: {e}") # print the error message
         return jsonify({"error": "An unexpected error occurred updating time spent."}), 500 # return the error message and 500 status code
 
 @progress_bp.route('/api/progress/reset-times', methods=['POST']) # for the reset all module times route, this is used to reset the module times
@@ -207,7 +207,7 @@ def reset_all_module_times(): # define the reset_all_module_times function
 
         decoded_token = firebase_admin.auth.verify_id_token(id_token) # verify the id token
         user_uid = decoded_token['uid'] # get the user id
-        print(f"Reset Times Endpoint: Request received for user: {user_uid}") # print the user id
+        print(f"Reset Times Endpoint: Request received") # print the user id
 
         modules_ref = db.collection('user_progress').document(user_uid).collection('modules') # get the modules reference
         docs_stream = modules_ref.stream() # get the stream of documents
@@ -220,9 +220,9 @@ def reset_all_module_times(): # define the reset_all_module_times function
 
         if doc_count > 0: # if the document count is greater than 0
             batch.commit() # commit the batch
-            print(f"Reset Times Endpoint: Successfully reset timeSpent for {doc_count} modules for user {user_uid}") # print the document count and the user id
+            print(f"Reset Times Endpoint: Successfully reset timeSpent for {doc_count} modules") # print the document count and the user id
         else: # if the document count is 0
-            print(f"Reset Times Endpoint: No module progress documents found to reset for user {user_uid}") # print the error message
+            print(f"Reset Times Endpoint: No module progress documents found to reset") # print the error message
 
         return jsonify({"success": True, "modulesReset": doc_count}), 200 # return the success message, the document count and 200 status code
 
@@ -233,5 +233,5 @@ def reset_all_module_times(): # define the reset_all_module_times function
         print(f"Reset Times Endpoint: Expired Firebase ID token received: {e}") # print the error message
         return jsonify({"error": "Authorisation token expired"}), 401 # return the error message and 401 status code
     except Exception as e: # if an error occurs
-        print(f"Reset Times Endpoint: Error resetting times for user {user_uid if 'user_uid' in locals() else 'unknown'}: {e}") # print the error message
+        print(f"Reset Times Endpoint: Error resetting times: {e}") # print the error message
         return jsonify({"error": "An unexpected error occurred resetting module times."}), 500 # return the error message and 500 status code

@@ -53,7 +53,7 @@ export const ProgressProvider = ({ children }) => { // create the ProgressProvid
     if (currentUser) { // if there is a current user
       fetchProgress(); // fetch the progress data
     }
-     else { // if there is no current user
+     else { // if there is no current user 
        setProgressData(null); // set the progress data to null
        setError(null); // set the error to null
        setIsLoading(false); // set the loading state to false

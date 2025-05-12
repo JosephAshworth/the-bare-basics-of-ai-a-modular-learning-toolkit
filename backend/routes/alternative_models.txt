@@ -1,0 +1,72 @@
+If the download_models.py script yields an error, please copy and paste the following code into a Google Colab cell, run it, and wait for the download to happen
+
+Then extract the downloaded ZIP file and place the saved_models folder in the backend/ directory
+
+
+
+
+
+# Hugging Face dependencies
+!pip install -q transformers huggingface_hub
+
+import os
+import sys
+from transformers import (
+    AutoModelForImageClassification, AutoImageProcessor,
+    AutoTokenizer, AutoModelForSequenceClassification,
+    AutoFeatureExtractor, AutoModelForAudioClassification
+)
+
+# Define save directory
+base_dir = "/content/saved_models"
+os.makedirs(base_dir, exist_ok=True)
+
+print("Starting model downloads...")
+
+models = {
+    "face_emotion_model": "Rajaram1996/FacialEmoRecog",
+    "face_emotion_processor": "Rajaram1996/FacialEmoRecog",
+    "text_emotion_model": "michellejieli/emotion_text_classifier",
+    "text_emotion_tokenizer": "michellejieli/emotion_text_classifier",
+    "audio_emotion_model": "Hatman/audio-emotion-detection",
+    "audio_emotion_extractor": "Hatman/audio-emotion-detection"
+}
+
+try:
+    # Facial models
+    print("\nDownloading facial emotion models...")
+    model = AutoModelForImageClassification.from_pretrained(models["face_emotion_model"])
+    processor = AutoImageProcessor.from_pretrained(models["face_emotion_processor"])
+    model.save_pretrained(os.path.join(base_dir, "face_emotion_model"))
+    processor.save_pretrained(os.path.join(base_dir, "face_emotion_processor"))
+    print("Facial emotion models saved.")
+
+    # Text models
+    print("\nDownloading text emotion models...")
+    text_model = AutoModelForSequenceClassification.from_pretrained(models["text_emotion_model"])
+    text_tokenizer = AutoTokenizer.from_pretrained(models["text_emotion_tokenizer"])
+    text_model.save_pretrained(os.path.join(base_dir, "text_emotion_model"))
+    text_tokenizer.save_pretrained(os.path.join(base_dir, "text_emotion_tokenizer"))
+    print("Text emotion models saved.")
+
+    # Audio models
+    print("\nDownloading audio emotion models...")
+    audio_model = AutoModelForAudioClassification.from_pretrained(models["audio_emotion_model"])
+    audio_extractor = AutoFeatureExtractor.from_pretrained(models["audio_emotion_extractor"])
+    audio_model.save_pretrained(os.path.join(base_dir, "audio_emotion_model"))
+    audio_extractor.save_pretrained(os.path.join(base_dir, "audio_emotion_extractor"))
+    print("Audio emotion models saved.")
+
+    # Zip the directory
+    print("\nZipping models...")
+    !zip -qr saved_models.zip saved_models/
+
+    # Start download
+    from google.colab import files
+    files.download("saved_models.zip")
+
+    print("\n Zipping and download successful")
+
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)

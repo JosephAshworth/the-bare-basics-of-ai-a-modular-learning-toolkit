@@ -231,7 +231,7 @@ def initialise_plant_care_system():  # initialise the fuzzy logic system for pla
 
 
 def comfort_analysis(): # define the comfort analysis function, this is used to analyse the comfort of the user
-    global comfort_simulator # declare the comfort simulator as global so it can be accessed and modified
+
 
     try: # try to execute the comfort analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -311,7 +311,7 @@ def comfort_analysis(): # define the comfort analysis function, this is used to 
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def air_quality_analysis(): # define the air_quality_analysis function to analyse the air quality
-    global air_quality_simulator # declare the air_quality_simulator variable as global to access it within the function
+
     
     try: # try to execute the air quality analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -385,7 +385,7 @@ def air_quality_analysis(): # define the air_quality_analysis function to analys
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def light_comfort_analysis(): # define the light_comfort_analysis function to analyse the light comfort
-    global light_simulator # declare the light_simulator variable as global to access it within the function
+
     
     try: # try to execute the light comfort analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -459,7 +459,6 @@ def light_comfort_analysis(): # define the light_comfort_analysis function to an
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def plant_care_analysis(): # define the plant care analysis function
-    global plant_care_simulator # declare the plant_care_simulator variable as global to access it within the function
     
     try: # try to execute the plant care analysis logic
         data = request.json # get the JSON data from the incoming request

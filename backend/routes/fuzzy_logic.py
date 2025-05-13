@@ -509,28 +509,26 @@ def plant_care_analysis(): # define the plant care analysis function
         if plant not in known_plants: # check if the plant type is not in the known plants
             plant = "general" # set the plant type to 'general' if not known
         
-        # 🌱 Apply plant-specific overrides to fuzzy outputs
+        # apply plant-specific overrides to fuzzy outputs
         if plant in {"succulent", "cactus"}:
-            # Succulents prefer infrequent watering
+            # succulents prefer infrequent watering
             watering_freq = min(watering_freq + 2, 10)
 
-            # Require high light — if low, override to increase light aggressively
+            # require high light, if low, override to increase light aggressively
             if light_level < 60:
                 light_adjustment = max(light_adjustment, 70)  # force increase
 
-            # Require warmth — override if dangerously cold
+            # require warmth, override if dangerously cold
             if temperature < 5:
                 temp_adjustment = max(temp_adjustment, 70)  # urge user to warm up
 
-            # Prevent unnecessary heating
+            # prevent unnecessary heating
             temp_adjustment = min(temp_adjustment, 60)
 
         elif plant == "fern":
             watering_freq = max(watering_freq - 2, 1)
-
             if light_level > 70:
                 light_adjustment = min(light_adjustment, 30)
-
             if temperature < 18:
                 temp_adjustment = max(temp_adjustment, 60)
 
@@ -565,46 +563,44 @@ def plant_care_analysis(): # define the plant care analysis function
         else: # if the temperature is 28 or greater
             temperature_status = "Hot" # set the status to "Hot"
         
-        watering_recommendation = "" # initialise an empty string to hold the watering recommendation
-        if watering_freq <= 2: # check if the watering frequency is less than or equal to 2
-            watering_recommendation = "Water your plant daily or every other day. The soil is quite dry." # set the recommendation to "Water your plant daily or every other day. The soil is quite dry."
-        elif watering_freq <= 5: # otherwise, check if the watering frequency is less than or equal to 5
-            watering_recommendation = f"Water your plant every {watering_freq} days. Monitor soil moisture regularly." # set the recommendation to "Water your plant every {watering_freq} days. Monitor soil moisture regularly."
-        else: # if the watering frequency is greater than 5
-            watering_recommendation = f"Water your plant every {watering_freq} days. Be careful not to overwater." # set the recommendation to "Water your plant every {watering_freq} days. Be careful not to overwater."
-        
-        light_recommendation = "" # initialise an empty string to hold the light recommendation
-        if light_adjustment >= 70: # check if the light adjustment is greater than or equal to 70
-            light_recommendation = "Increase light exposure significantly. Move to a sunnier location." # set the recommendation to "Increase light exposure significantly. Move to a sunnier location."
-        elif light_adjustment > 55: # otherwise, check if the light adjustment is greater than 0
-            light_recommendation = "Slightly increase light exposure. Consider moving closer to a window." # set the recommendation to "Slightly increase light exposure. Consider moving closer to a window."
-        elif light_adjustment < 30: # otherwise, check if the light adjustment is less than 30
-            light_recommendation = "Decrease light exposure significantly. Move to a shadier location or add a curtain." # set the recommendation to "Decrease light exposure significantly. Move to a shadier location or add a curtain."
-        elif light_adjustment < 45: # otherwise, check if the light adjustment is less than 45
-            light_recommendation = "Slightly decrease light exposure. Move a bit further from direct sunlight." # set the recommendation to "Slightly decrease light exposure. Move a bit further from direct sunlight."
-        else: # if the light adjustment is 0 or greater
-            light_recommendation = "Current light conditions are appropriate. Maintain current placement." # set the recommendation to "Current light conditions are appropriate. Maintain current placement."
-        
-        temp_recommendation = "" # initialise an empty string to hold the temperature recommendation
-        if temp_adjustment >= 70: # check if the temperature adjustment is greater than or equal to 70
-            temp_recommendation = "Increase temperature significantly. Consider moving to a warmer spot or using heating." # set the recommendation to "Increase temperature significantly. Consider moving to a warmer spot or using heating."
-        elif temp_adjustment > 55: # otherwise, check if the temperature adjustment is greater than 55
-            temp_recommendation = "Slightly increase temperature. Move away from cold drafts." # set the recommendation to "Slightly increase temperature. Move away from cold drafts."
-        elif temp_adjustment < 30: # otherwise, check if the temperature adjustment is less than 30
-            temp_recommendation = "Decrease temperature significantly. Move to a cooler location." # set the recommendation to "Decrease temperature significantly. Move to a cooler location."
-        elif temp_adjustment < 45: # otherwise, check if the temperature adjustment is less than 45
-            temp_recommendation = "Slightly decrease temperature. Avoid placing near heaters or hot windows." # set the recommendation to "Slightly decrease temperature. Avoid placing near heaters or hot windows."
-        else: # if the temperature adjustment is 0 or greater
-            temp_recommendation = "Current temperature is appropriate. Maintain current conditions." # set the recommendation to "Current temperature is appropriate. Maintain current conditions."
-        
-        plant_specific_advice = "" # initialise an empty string to hold the plant specific advice
-        if plant in ["succulent", "cactus"]: # check if the plant type is a succulent or cactus
-            plant_specific_advice = "As a succulent/cactus, this plant prefers drier conditions and less frequent watering than most houseplants." # set the advice to "As a succulent/cactus, this plant prefers drier conditions and less frequent watering than most houseplants."
-        elif plant == "fern": # otherwise, check if the plant type is a fern
-            plant_specific_advice = "Ferns generally prefer higher humidity and regular watering. Consider misting regularly." # set the advice to "Ferns generally prefer higher humidity and consistent moisture. Consider misting regularly."
-        elif plant == "orchid": # otherwise, check if the plant type is an orchid
-            plant_specific_advice = "Orchids have specific care requirements. They prefer bright indirect light and should be watered thoroughly but infrequently." # set the advice to "Orchids have specific care requirements. They prefer bright indirect light and should be watered thoroughly but infrequently."
-        
+        # prepare watering recommendation
+        if watering_freq <= 2:
+            watering_recommendation = "Water your plant daily or every other day. The soil is quite dry."
+        elif watering_freq <= 5:
+            watering_recommendation = f"Water your plant every {watering_freq} days. Monitor soil moisture regularly."
+        else:
+            watering_recommendation = f"Water your plant every {watering_freq} days. Be careful not to overwater."
+
+        # prepare light recommendation
+        if light_adjustment >= 70:
+            light_recommendation = "Increase light exposure significantly. Move to a sunnier location."
+        elif light_adjustment > 55:
+            light_recommendation = "Slightly increase light exposure. Consider moving closer to a window."
+        elif light_adjustment < 30:
+            light_recommendation = "Decrease light exposure significantly. Move to a shadier location or add a curtain."
+        else:
+            light_recommendation = "Maintain current light conditions."
+
+        # prepare temperature recommendation
+        if temp_adjustment >= 70:
+            temp_recommendation = "Increase temperature significantly. Consider moving to a warmer spot or using heating."
+        elif temp_adjustment > 55:
+            temp_recommendation = "Slightly increase temperature. Move away from cold drafts."
+        elif temp_adjustment < 30:
+            temp_recommendation = "Decrease temperature significantly. Move to a cooler location."
+        else:
+            temp_recommendation = "Maintain current temperature."
+
+
+
+        # plant specific advice
+        plant_specific_advice = {
+            "succulent": "Succulents prefer drier conditions and less frequent watering than most houseplants.",
+            "cactus": "Cacti prefer dry, warm conditions and need infrequent watering.",
+            "fern": "Ferns generally prefer higher humidity and regular watering. Consider misting regularly.",
+            "orchid": "Orchids require bright, indirect light and should be watered thoroughly but infrequently."
+        }.get(plant, "")
+
         response = { # create a response dictionary to hold the plant care analysis results
             "recommendations": { # create a recommendations dictionary to hold the watering, light, and temperature recommendations
                 "watering": watering_recommendation, # set the watering recommendation to the watering recommendation

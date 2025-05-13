@@ -9,182 +9,229 @@ air_quality_simulator = None # set the air quality simulator to None initially, 
 light_simulator = None # set the light simulator to None initially, this will be used to store the light simulator
 plant_care_simulator = None # set the plant care simulator to None initially, this will be used to store the plant care simulator
 
-def initialise_comfort_system(): # define the initialise_comfort_system function to initialise the comfort system
-    try: # try to initialise the comfort system
-        temperature = ctrl.Antecedent(np.arange(0, 51, 1), 'temperature') # create the temperature antecedent, this is the input of the comfort system, between 0 and 50 degrees Celsius
-        humidity = ctrl.Antecedent(np.arange(0, 101, 1), 'humidity') # create the humidity antecedent, this is the input of the comfort system, between 0 and 100%
-        
-        comfort = ctrl.Consequent(np.arange(0, 101, 1), 'comfort') # create the comfort consequent, this is the output of the comfort system, between 0 and 100%
-        
-        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 20]) # create the cold membership function, this is used to define the cold temperature, between 0 and 20 degrees Celsius
-        temperature['moderate'] = fuzz.trimf(temperature.universe, [10, 25, 35]) # create the moderate membership function, this is used to define the moderate temperature, between 10 and 35 degrees Celsius  
-        temperature['hot'] = fuzz.trimf(temperature.universe, [30, 50, 50]) # create the hot membership function, this is used to define the hot temperature, between 30 and 50 degrees Celsius
-        
-        humidity['dry'] = fuzz.trimf(humidity.universe, [0, 0, 40]) # create the dry membership function, this is used to define the dry humidity, between 0 and 40%
-        humidity['normal'] = fuzz.trimf(humidity.universe, [20, 50, 80]) # create the normal membership function, this is used to define the normal humidity, between 20 and 80%    
-        humidity['humid'] = fuzz.trimf(humidity.universe, [60, 100, 100]) # create the humid membership function, this is used to define the humid humidity, between 60 and 100%
-        
-        comfort['uncomfortable'] = fuzz.trimf(comfort.universe, [0, 0, 40]) # create the uncomfortable membership function, this is used to define the uncomfortable comfort, between 0 and 40%
-        comfort['acceptable'] = fuzz.trimf(comfort.universe, [20, 50, 80]) # create the acceptable membership function, this is used to define the acceptable comfort, between 20 and 80%   
-        comfort['comfortable'] = fuzz.trimf(comfort.universe, [60, 100, 100]) # create the comfortable membership function, this is used to define the comfortable comfort, between 60 and 100%
-        
-        rule1 = ctrl.Rule(temperature['cold'] & humidity['humid'], comfort['uncomfortable']) # create the rule for the cold and humid conditions, this is used to define the uncomfortable comfort, between 0 and 40%
-        rule2 = ctrl.Rule(temperature['cold'] & humidity['normal'], comfort['acceptable']) # create the rule for the cold and normal conditions, this is used to define the acceptable comfort, between 20 and 80%  
-        rule3 = ctrl.Rule(temperature['cold'] & humidity['dry'], comfort['acceptable']) # create the rule for the cold and dry conditions, this is used to define the acceptable comfort, between 20 and 80%
-        
-        rule4 = ctrl.Rule(temperature['moderate'] & humidity['dry'], comfort['acceptable']) # create the rule for the moderate and dry conditions, this is used to define the acceptable comfort, between 20 and 80%
-        rule5 = ctrl.Rule(temperature['moderate'] & humidity['normal'], comfort['comfortable']) # create the rule for the moderate and normal conditions, this is used to define the comfortable comfort, between 60 and 100%   
-        rule6 = ctrl.Rule(temperature['moderate'] & humidity['humid'], comfort['acceptable']) # create the rule for the moderate and humid conditions, this is used to define the acceptable comfort, between 20 and 80%
-        
-        rule7 = ctrl.Rule(temperature['hot'] & humidity['dry'], comfort['acceptable']) # create the rule for the hot and dry conditions, this is used to define the acceptable comfort, between 20 and 80%
-        rule8 = ctrl.Rule(temperature['hot'] & humidity['normal'], comfort['acceptable']) # create the rule for the hot and normal conditions, this is used to define the acceptable comfort, between 20 and 80%    
-        rule9 = ctrl.Rule(temperature['hot'] & humidity['humid'], comfort['uncomfortable']) # create the rule for the hot and humid conditions, this is used to define the uncomfortable comfort, between 0 and 40% 
-        
-        comfort_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9]) # create the control system for the comfort system, taking the rules into account
-        comfort_simulator = ctrl.ControlSystemSimulation(comfort_ctrl) # create the simulator for the comfort system, taking the control system into account
-        
-        return comfort_simulator # return the comfort simulator
-    except Exception: # if an error occurs
-        return None # return None
+def avoid_fuzzy_edge(value, min_val, max_val, delta=0.01): # function to avoid fuzzy edge cases
+    if value <= min_val:
+        return min_val + delta
+    elif value >= max_val:
+        return max_val - delta
+    return value
 
-def initialise_air_quality_system(): # define the initialise_air_quality_system function to initialise the air quality system
-    try: # try to initialise the air quality system
-        co2 = ctrl.Antecedent(np.arange(300, 2001, 1), 'co2') # create the co2 antecedent, this is the input of the air quality system, between 300 and 2000 ppm
-        pm25 = ctrl.Antecedent(np.arange(0, 101, 1), 'pm25') # create the pm25 antecedent, this is the input of the air quality system, between 0 and 100 μg/m³
-        
-        air_quality = ctrl.Consequent(np.arange(0, 101, 1), 'air_quality') # create the air quality consequent, this is the output of the air quality system, between 0 and 100%
-        
-        co2['good'] = fuzz.trimf(co2.universe, [300, 300, 800]) # create the good membership function, this is used to define the good co2, between 300 and 800 ppm
-        co2['moderate'] = fuzz.trimf(co2.universe, [600, 1000, 1400]) # create the moderate membership function, this is used to define the moderate co2, between 600 and 1400 ppm  
-        co2['poor'] = fuzz.trimf(co2.universe, [1200, 2000, 2000]) # create the poor membership function, this is used to define the poor co2, between 1200 and 2000 ppm
-        
-        pm25['low'] = fuzz.trimf(pm25.universe, [0, 0, 25]) # create the low membership function, this is used to define the low pm25, between 0 and 25 μg/m³
-        pm25['medium'] = fuzz.trimf(pm25.universe, [15, 35, 55]) # create the medium membership function, this is used to define the medium pm25, between 15 and 55 μg/m³   
-        pm25['high'] = fuzz.trimf(pm25.universe, [45, 100, 100]) # create the high membership function, this is used to define the high pm25, between 45 and 100 μg/m³
-        
-        air_quality['unhealthy'] = fuzz.trimf(air_quality.universe, [0, 0, 40]) # create the unhealthy membership function, this is used to define the unhealthy air quality, between 0 and 40%
-        air_quality['moderate'] = fuzz.trimf(air_quality.universe, [20, 50, 80]) # create the moderate membership function, this is used to define the moderate air quality, between 20 and 80%
-        air_quality['healthy'] = fuzz.trimf(air_quality.universe, [60, 100, 100]) # create the healthy membership function, this is used to define the healthy air quality, between 60 and 100%
-        
-        rule1 = ctrl.Rule(co2['good'] & pm25['low'], air_quality['healthy']) # create the rule for the good and low conditions, this is used to define the healthy air quality, between 60 and 100%
-        rule2 = ctrl.Rule(co2['good'] & pm25['medium'], air_quality['moderate']) # create the rule for the good and medium conditions, this is used to define the moderate air quality, between 20 and 80%  
-        rule3 = ctrl.Rule(co2['good'] & pm25['high'], air_quality['unhealthy']) # create the rule for the good and high conditions, this is used to define the unhealthy air quality, between 0 and 40%
-        
-        rule4 = ctrl.Rule(co2['moderate'] & pm25['low'], air_quality['moderate']) # create the rule for the moderate and low conditions, this is used to define the moderate air quality, between 20 and 80%
-        rule5 = ctrl.Rule(co2['moderate'] & pm25['medium'], air_quality['moderate']) # create the rule for the moderate and medium conditions, this is used to define the moderate air quality, between 20 and 80%  
-        rule6 = ctrl.Rule(co2['moderate'] & pm25['high'], air_quality['unhealthy']) # create the rule for the moderate and high conditions, this is used to define the unhealthy air quality, between 0 and 40%
-        
-        rule7 = ctrl.Rule(co2['poor'] & pm25['low'], air_quality['moderate']) # create the rule for the poor and low conditions, this is used to define the moderate air quality, between 20 and 80%
-        rule8 = ctrl.Rule(co2['poor'] & pm25['medium'], air_quality['unhealthy']) # create the rule for the poor and medium conditions, this is used to define the unhealthy air quality, between 0 and 40% 
-        rule9 = ctrl.Rule(co2['poor'] & pm25['high'], air_quality['unhealthy']) # create the rule for the poor and high conditions, this is used to define the unhealthy air quality, between 0 and 40%
-        
-        air_quality_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9]) # create the control system for the air quality system, taking the rules into account
-        air_quality_simulator = ctrl.ControlSystemSimulation(air_quality_ctrl) # create the simulator for the air quality system, taking the control system into account
-        
-        return air_quality_simulator # return the air quality simulator
-    except Exception: # if an error occurs
-        return None # return None
 
-def initialise_light_system(): # define the initialise_light_system function to initialise the light system
-    try: # try to initialise the light system
-        intensity = ctrl.Antecedent(np.arange(0, 1001, 1), 'intensity') # create the intensity antecedent, this is the input of the light system
-        colour_temp = ctrl.Antecedent(np.arange(2000, 6501, 1), 'colour_temp') # create the colour temperature antecedent, this is the input of the light system
-        
-        light_comfort = ctrl.Consequent(np.arange(0, 101, 1), 'light_comfort') # create the light comfort consequent, this is the output of the light system, between 0 and 100%
-        
-        intensity['dim'] = fuzz.trimf(intensity.universe, [0, 0, 300]) # create the dim membership function, this is used to define the dim intensity, between 0 and 300 lux
-        intensity['moderate'] = fuzz.trimf(intensity.universe, [200, 500, 800]) # create the moderate membership function, this is used to define the moderate intensity, between 200 and 800 lux   
-        intensity['bright'] = fuzz.trimf(intensity.universe, [700, 1000, 1000]) # create the bright membership function, this is used to define the bright intensity, between 700 and 1000 lux
-        
-        colour_temp['warm'] = fuzz.trimf(colour_temp.universe, [2000, 2000, 3500]) # create the warm membership function, this is used to define the warm colour temperature, between 2000 and 3500 K  
-        colour_temp['neutral'] = fuzz.trimf(colour_temp.universe, [3000, 4000, 5000]) # create the neutral membership function, this is used to define the neutral colour temperature, between 3000 and 5000 K 
-        colour_temp['cool'] = fuzz.trimf(colour_temp.universe, [4500, 6500, 6500]) # create the cool membership function, this is used to define the cool colour temperature, between 4500 and 6500 K
-        
-        light_comfort['uncomfortable'] = fuzz.trimf(light_comfort.universe, [0, 0, 40]) # create the uncomfortable membership function, this is used to define the uncomfortable light comfort, between 0 and 40%
-        light_comfort['acceptable'] = fuzz.trimf(light_comfort.universe, [20, 50, 80]) # create the acceptable membership function, this is used to define the acceptable light comfort, between 20 and 80%
-        light_comfort['comfortable'] = fuzz.trimf(light_comfort.universe, [60, 100, 100]) # create the comfortable membership function, this is used to define the comfortable light comfort, between 60 and 100%
-        
-        rule1 = ctrl.Rule(intensity['dim'] & colour_temp['warm'], light_comfort['acceptable']) # create the rule for the dim and warm conditions, this is used to define the acceptable light comfort, between 20 and 80%
-        rule2 = ctrl.Rule(intensity['dim'] & colour_temp['neutral'], light_comfort['acceptable']) # create the rule for the dim and neutral conditions, this is used to define the acceptable light comfort, between 20 and 80%
-        rule3 = ctrl.Rule(intensity['dim'] & colour_temp['cool'], light_comfort['uncomfortable']) # create the rule for the dim and cool conditions, this is used to define the uncomfortable light comfort, between 0 and 40%
-        
-        rule4 = ctrl.Rule(intensity['moderate'] & colour_temp['warm'], light_comfort['comfortable']) # create the rule for the moderate and warm conditions, this is used to define the comfortable light comfort, between 60 and 100%
-        rule5 = ctrl.Rule(intensity['moderate'] & colour_temp['neutral'], light_comfort['comfortable']) # create the rule for the moderate and neutral conditions, this is used to define the comfortable light comfort, between 60 and 100%
-        rule6 = ctrl.Rule(intensity['moderate'] & colour_temp['cool'], light_comfort['acceptable']) # create the rule for the moderate and cool conditions, this is used to define the acceptable light comfort, between 20 and 80%
-        
-        rule7 = ctrl.Rule(intensity['bright'] & colour_temp['warm'], light_comfort['acceptable']) # create the rule for the bright and warm conditions, this is used to define the acceptable light comfort, between 20 and 80%
-        rule8 = ctrl.Rule(intensity['bright'] & colour_temp['neutral'], light_comfort['acceptable']) # create the rule for the bright and neutral conditions, this is used to define the acceptable light comfort, between 20 and 80%
-        rule9 = ctrl.Rule(intensity['bright'] & colour_temp['cool'], light_comfort['uncomfortable']) # create the rule for the bright and cool conditions, this is used to define the uncomfortable light comfort, between 0 and 40%
-        
-        light_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9]) # create the control system for the light system, taking the rules into account
-        light_simulator = ctrl.ControlSystemSimulation(light_ctrl) # create the simulator for the light system, taking the control system into account
-        
-        return light_simulator # return the light simulator
-    except Exception: # if an error occurs
-        return None # return None
+def initialise_comfort_system(): # initialise the fuzzy logic system for comfort evaluation
+    try:
+        # define input variables (antecedents)
+        temperature = ctrl.Antecedent(np.arange(0, 51, 1), 'temperature')  # temperature in °c (0–50)
+        humidity = ctrl.Antecedent(np.arange(0, 101, 1), 'humidity') # humidity in % (0–100)
 
-def initialise_plant_care_system(): # define the initialise_plant_care_system function to initialise the plant care system
-    try: # try to initialise the plant care system
-        soil_moisture = ctrl.Antecedent(np.arange(0, 101, 1), 'soil_moisture') # create the soil moisture antecedent, this is the input of the plant care system, between 0 and 100%
-        light_level = ctrl.Antecedent(np.arange(0, 101, 1), 'light_level') # create the light level antecedent, this is the input of the plant care system, between 0 and 100%
-        temperature = ctrl.Antecedent(np.arange(0, 41, 1), 'temperature') # create the temperature antecedent, this is the input of the plant care system, between 0 and 40 degrees Celsius
-        
-        watering_freq = ctrl.Consequent(np.arange(0, 11, 1), 'watering_freq') # create the watering frequency consequent, this is the output of the plant care system, between 0 and 10
-        light_adjustment = ctrl.Consequent(np.arange(-10, 11, 1), 'light_adjustment') # create the light adjustment consequent, this is the output of the plant care system, between -10 and 10
-        temp_adjustment = ctrl.Consequent(np.arange(-10, 11, 1), 'temp_adjustment') # create the temperature adjustment consequent, this is the output of the plant care system, between -10 and 10
-        
-        soil_moisture['dry'] = fuzz.trimf(soil_moisture.universe, [0, 0, 40]) # create the dry membership function, this is used to define the dry soil moisture, between 0 and 40%
-        soil_moisture['moist'] = fuzz.trimf(soil_moisture.universe, [20, 50, 80]) # create the moist membership function, this is used to define the moist soil moisture, between 20 and 80%
-        soil_moisture['wet'] = fuzz.trimf(soil_moisture.universe, [60, 100, 100]) # create the wet membership function, this is used to define the wet soil moisture, between 60 and 100%
-        
-        light_level['dark'] = fuzz.trimf(light_level.universe, [0, 0, 30]) # create the dark membership function, this is used to define the dark light level, between 0 and 30%
-        light_level['medium'] = fuzz.trimf(light_level.universe, [20, 50, 80]) # create the medium membership function, this is used to define the medium light level, between 20 and 80%
-        light_level['bright'] = fuzz.trimf(light_level.universe, [70, 100, 100]) # create the bright membership function, this is used to define the bright light level, between 70 and 100%
-        
-        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 15]) # create the cold membership function, this is used to define the cold temperature, between 0 and 15 degrees Celsius
-        temperature['moderate'] = fuzz.trimf(temperature.universe, [10, 20, 30]) # create the moderate membership function, this is used to define the moderate temperature, between 10 and 30 degrees Celsius
-        temperature['hot'] = fuzz.trimf(temperature.universe, [25, 40, 40]) # create the hot membership function, this is used to define the hot temperature, between 25 and 40 degrees Celsius
-        
-        watering_freq['frequent'] = fuzz.trimf(watering_freq.universe, [0, 0, 4]) # create the frequent membership function, this is used to define the frequent watering frequency, between 0 and 4
-        watering_freq['moderate'] = fuzz.trimf(watering_freq.universe, [2, 5, 8]) # create the moderate membership function, this is used to define the moderate watering frequency, between 2 and 8
-        watering_freq['infrequent'] = fuzz.trimf(watering_freq.universe, [6, 10, 10]) # create the infrequent membership function, this is used to define the infrequent watering frequency, between 6 and 10
-        
-        light_adjustment['decrease'] = fuzz.trimf(light_adjustment.universe, [-10, -10, 0]) # create the decrease membership function, this is used to define the decrease light adjustment, between -10 and 0
-        light_adjustment['maintain'] = fuzz.trimf(light_adjustment.universe, [-5, 0, 5]) # create the maintain membership function, this is used to define the maintain light adjustment, between -5 and 5
-        light_adjustment['increase'] = fuzz.trimf(light_adjustment.universe, [0, 10, 10]) # create the increase membership function, this is used to define the increase light adjustment, between 0 and 10
-        
-        temp_adjustment['decrease'] = fuzz.trimf(temp_adjustment.universe, [-10, -10, 0]) # create the decrease membership function, this is used to define the decrease temperature adjustment, between -10 and 0
-        temp_adjustment['maintain'] = fuzz.trimf(temp_adjustment.universe, [-5, 0, 5]) # create the maintain membership function, this is used to define the maintain temperature adjustment, between -5 and 5
-        temp_adjustment['increase'] = fuzz.trimf(temp_adjustment.universe, [0, 10, 10]) # create the increase membership function, this is used to define the increase temperature adjustment, between 0 and 10
+        # define output variable (consequent)
+        comfort = ctrl.Consequent(np.arange(0, 101, 1), 'comfort') # comfort score (0–100)
 
-        rule1 = ctrl.Rule(soil_moisture['dry'] & (light_level['bright'] | temperature['hot']), watering_freq['frequent']) # create the rule for the dry and bright or hot conditions, this is used to define the frequent watering frequency, between 0 and 4
-        rule2 = ctrl.Rule(soil_moisture['dry'] & light_level['medium'] & temperature['moderate'], watering_freq['frequent']) # create the rule for the dry and medium and moderate conditions, this is used to define the frequent watering frequency, between 0 and 4
-        rule3 = ctrl.Rule(soil_moisture['dry'] & light_level['dark'] & temperature['cold'], watering_freq['moderate']) # create the rule for the dry and dark and cold conditions, this is used to define the moderate watering frequency, between 2 and 8
-        
-        rule4 = ctrl.Rule(soil_moisture['moist'] & (light_level['bright'] | temperature['hot']), watering_freq['moderate']) # create the rule for the moist and bright or hot conditions, this is used to define the moderate watering frequency, between 2 and 8
-        rule5 = ctrl.Rule(soil_moisture['moist'] & light_level['medium'] & temperature['moderate'], watering_freq['moderate']) # create the rule for the moist and medium and moderate conditions, this is used to define the moderate watering frequency, between 2 and 8
-        rule6 = ctrl.Rule(soil_moisture['moist'] & light_level['dark'] & temperature['cold'], watering_freq['infrequent']) # create the rule for the moist and dark and cold conditions, this is used to define the infrequent watering frequency, between 6 and 10
-        
-        rule7 = ctrl.Rule(soil_moisture['wet'], watering_freq['infrequent']) # create the rule for the wet conditions, this is used to define the infrequent watering frequency, between 6 and 10
+        # membership functions for temperature
+        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 15])  # cold temperature
+        temperature['moderate'] = fuzz.trimf(temperature.universe, [15, 23, 30])  # moderate temperature
+        temperature['hot'] = fuzz.trimf(temperature.universe, [28, 50, 50])  # hot temperature
 
-        rule8 = ctrl.Rule(light_level['dark'], light_adjustment['increase']) # create the rule for the dark conditions, this is used to define the increase light adjustment, between -10 and 0
-        rule9 = ctrl.Rule(light_level['medium'], light_adjustment['maintain']) # create the rule for the medium conditions, this is used to define the maintain light adjustment, between -5 and 5
-        rule10 = ctrl.Rule(light_level['bright'], light_adjustment['decrease']) # create the rule for the bright conditions, this is used to define the decrease light adjustment, between 0 and 10
-        
-        rule11 = ctrl.Rule(temperature['cold'], temp_adjustment['increase']) # create the rule for the cold conditions, this is used to define the increase temperature adjustment, between 0 and 10
-        rule12 = ctrl.Rule(temperature['moderate'], temp_adjustment['maintain']) # create the rule for the moderate conditions, this is used to define the maintain temperature adjustment, between -5 and 5
-        rule13 = ctrl.Rule(temperature['hot'], temp_adjustment['decrease']) # create the rule for the hot conditions, this is used to define the decrease temperature adjustment, between -10 and 0
+        # membership functions for humidity
+        humidity['dry'] = fuzz.trimf(humidity.universe, [0, 0, 30])  # dry air
+        humidity['normal'] = fuzz.trimf(humidity.universe, [30, 50, 70])  # comfortable humidity
+        humidity['humid'] = fuzz.trimf(humidity.universe, [65, 100, 100])  # high humidity
 
-        plant_care_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, 
-                                              rule8, rule9, rule10, rule11, rule12, rule13]) # create the control system for the plant care system, taking the rules into account
-        plant_care_simulator = ctrl.ControlSystemSimulation(plant_care_ctrl) # create the simulator for the plant care system, taking the control system into account
-        
-        return plant_care_simulator # return the plant care simulator
-    except Exception: # if an error occurs
-        return None # return None
+        # membership functions for comfort
+        comfort['uncomfortable'] = fuzz.trimf(comfort.universe, [0, 0, 30])  # low comfort
+        comfort['acceptable'] = fuzz.trimf(comfort.universe, [25, 50, 75])  # moderate comfort
+        comfort['comfortable'] = fuzz.trimf(comfort.universe, [70, 100, 100])  # high comfort
+
+        # define fuzzy rules
+        rule1 = ctrl.Rule(temperature['cold'] & humidity['humid'], comfort['uncomfortable']) # cold and humid
+        rule2 = ctrl.Rule(temperature['cold'] & humidity['normal'], comfort['acceptable']) # cold and normal
+        rule3 = ctrl.Rule(temperature['cold'] & humidity['dry'], comfort['uncomfortable']) # cold and dry
+
+        rule4 = ctrl.Rule(temperature['moderate'] & humidity['dry'], comfort['acceptable']) # moderate and dry
+        rule5 = ctrl.Rule(temperature['moderate'] & humidity['normal'], comfort['comfortable']) # ideal conditions
+        rule6 = ctrl.Rule(temperature['moderate'] & humidity['humid'], comfort['acceptable']) # moderate and humid
+
+        rule7 = ctrl.Rule(temperature['hot'] & humidity['dry'], comfort['uncomfortable']) # hot and dry
+        rule8 = ctrl.Rule(temperature['hot'] & humidity['normal'], comfort['uncomfortable']) # hot and normal
+        rule9 = ctrl.Rule(temperature['hot'] & humidity['humid'], comfort['uncomfortable']) # hot and humid
+
+        # build control system and simulator
+        comfort_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9])
+        comfort_simulator = ctrl.ControlSystemSimulation(comfort_ctrl)
+
+        return comfort_simulator
+    except Exception:
+        return None
+
+
+def initialise_air_quality_system():  # initialise the fuzzy logic system for air quality assessment
+    try:
+        # define input variables (antecedents)
+        co2 = ctrl.Antecedent(np.arange(300, 2001, 1), 'co2') # co2 concentration in ppm (300–2000)
+        pm25 = ctrl.Antecedent(np.arange(0, 101, 1), 'pm25') # PM2.5 concentration in μg/m³ (0–100)
+
+        # define output variable (consequent)
+        air_quality = ctrl.Consequent(np.arange(0, 101, 1), 'air_quality') # air quality score (0–100)
+
+        # membership functions for co2
+        co2['good'] = fuzz.trimf(co2.universe, [300, 300, 800]) # good air quality at low co2
+        co2['moderate'] = fuzz.trimf(co2.universe, [600, 1000, 1400]) # moderate air quality
+        co2['poor'] = fuzz.trimf(co2.universe, [1200, 2000, 2000]) # poor air quality at high co2
+
+        # membership functions for PM2.5
+        pm25['low'] = fuzz.trimf(pm25.universe, [0, 0, 25]) # low particulate pollution
+        pm25['medium'] = fuzz.trimf(pm25.universe, [15, 35, 55]) # moderate particulate pollution
+        pm25['high'] = fuzz.trimf(pm25.universe, [45, 100, 100]) # high particulate pollution
+
+        # membership functions for Air Quality
+        air_quality['unhealthy'] = fuzz.trimf(air_quality.universe, [0, 0, 40]) # poor air quality
+        air_quality['moderate'] = fuzz.trimf(air_quality.universe, [20, 50, 80]) # medium quality
+        air_quality['healthy'] = fuzz.trimf(air_quality.universe, [60, 100, 100]) # ideal air quality
+
+        # define fuzzy rules
+        rule1 = ctrl.Rule(co2['good'] & pm25['low'], air_quality['healthy']) # ideal conditions
+        rule2 = ctrl.Rule(co2['good'] & pm25['medium'], air_quality['moderate']) # low co2, moderate PM
+        rule3 = ctrl.Rule(co2['good'] & pm25['high'], air_quality['unhealthy']) # low co2, high PM
+
+        rule4 = ctrl.Rule(co2['moderate'] & pm25['low'], air_quality['moderate']) # moderate co2, low PM
+        rule5 = ctrl.Rule(co2['moderate'] & pm25['medium'], air_quality['moderate']) # moderate conditions
+        rule6 = ctrl.Rule(co2['moderate'] & pm25['high'], air_quality['unhealthy']) # moderate co2, high PM
+
+        rule7 = ctrl.Rule(co2['poor'] & pm25['low'], air_quality['moderate']) # high co2, low PM
+        rule8 = ctrl.Rule(co2['poor'] & pm25['medium'], air_quality['unhealthy']) # high co2, moderate PM
+        rule9 = ctrl.Rule(co2['poor'] & pm25['high'], air_quality['unhealthy']) # worst-case scenario
+
+        # build and simulate the fuzzy control system
+        air_quality_ctrl = ctrl.ControlSystem([
+            rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9
+        ])
+        air_quality_simulator = ctrl.ControlSystemSimulation(air_quality_ctrl)
+
+        return air_quality_simulator  # return the configured simulator
+    except Exception:
+        return None  # return None if initialisation fails
+
+
+def initialise_light_system():  # initialise the fuzzy logic system for light comfort
+    try:
+        # define input variables (antecedents)
+        intensity = ctrl.Antecedent(np.arange(0, 1001, 1), 'intensity')  # light intensity in lux (0–1000)
+        colour_temp = ctrl.Antecedent(np.arange(2000, 6501, 1), 'colour_temp')  # colour temperature in kelvin (2000–6500)
+
+        # define output variable (consequent)
+        light_comfort = ctrl.Consequent(np.arange(0, 101, 1), 'light_comfort')  # light comfort score (0–100)
+
+        # membership functions for intensity
+        intensity['dim'] = fuzz.trimf(intensity.universe, [0, 0, 300])  # low light level
+        intensity['moderate'] = fuzz.trimf(intensity.universe, [200, 500, 800])  # moderate light
+        intensity['bright'] = fuzz.trimf(intensity.universe, [700, 1000, 1000])  # high light level
+
+        # membership functions for colour temperature
+        colour_temp['warm'] = fuzz.trimf(colour_temp.universe, [2000, 2000, 3500])  # warm colour
+        colour_temp['neutral'] = fuzz.trimf(colour_temp.universe, [3000, 4000, 5000])  # neutral white
+        colour_temp['cool'] = fuzz.trimf(colour_temp.universe, [4500, 6500, 6500])  # cool blueish light
+
+        # membership functions for light comfort
+        light_comfort['uncomfortable'] = fuzz.trimf(light_comfort.universe, [0, 0, 40])  # low comfort
+        light_comfort['acceptable'] = fuzz.trimf(light_comfort.universe, [20, 50, 80])  # moderate comfort
+        light_comfort['comfortable'] = fuzz.trimf(light_comfort.universe, [60, 100, 100])  # high comfort
+
+        # define fuzzy rules
+        rule1 = ctrl.Rule(intensity['dim'] & colour_temp['warm'], light_comfort['acceptable'])  # dim + warm
+        rule2 = ctrl.Rule(intensity['dim'] & colour_temp['neutral'], light_comfort['acceptable'])  # dim + neutral
+        rule3 = ctrl.Rule(intensity['dim'] & colour_temp['cool'], light_comfort['uncomfortable'])  # dim + cool
+
+        rule4 = ctrl.Rule(intensity['moderate'] & colour_temp['warm'], light_comfort['comfortable'])  # moderate + warm
+        rule5 = ctrl.Rule(intensity['moderate'] & colour_temp['neutral'], light_comfort['comfortable'])  # moderate + neutral
+        rule6 = ctrl.Rule(intensity['moderate'] & colour_temp['cool'], light_comfort['acceptable'])  # moderate + cool
+
+        rule7 = ctrl.Rule(intensity['bright'] & colour_temp['warm'], light_comfort['acceptable'])  # bright + warm
+        rule8 = ctrl.Rule(intensity['bright'] & colour_temp['neutral'], light_comfort['acceptable'])  # bright + neutral
+        rule9 = ctrl.Rule(intensity['bright'] & colour_temp['cool'], light_comfort['uncomfortable'])  # bright + cool
+
+        # build control system and simulator
+        light_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8, rule9])
+        light_simulator = ctrl.ControlSystemSimulation(light_ctrl)
+
+        return light_simulator
+    except Exception:
+        return None
+
+
+def initialise_plant_care_system():  # initialise the fuzzy logic system for plant care
+    try:
+        # define input variables (antecedents)
+        soil_moisture = ctrl.Antecedent(np.arange(0, 101, 1), 'soil_moisture')  # soil moisture (0–100%)
+        light_level = ctrl.Antecedent(np.arange(0, 101, 1), 'light_level')  # light level (0–100%)
+        temperature = ctrl.Antecedent(np.arange(0, 41, 1), 'temperature')  # temperature (0–40°C)
+
+        # define output variables (consequents)
+        watering_freq = ctrl.Consequent(np.arange(0, 11, 1), 'watering_freq')  # watering frequency (0–10 days)
+        light_adjustment = ctrl.Consequent(np.arange(0, 101, 1), 'light_adjustment')  # light adjustment percentage (0–100)
+        temp_adjustment = ctrl.Consequent(np.arange(0, 101, 1), 'temp_adjustment')  # temperature adjustment percentage (0–100)
+
+        # membership functions for soil moisture
+        soil_moisture['dry'] = fuzz.trimf(soil_moisture.universe, [0, 0, 40])  # low soil moisture
+        soil_moisture['moist'] = fuzz.trimf(soil_moisture.universe, [20, 50, 80])  # moderate soil moisture
+        soil_moisture['wet'] = fuzz.trimf(soil_moisture.universe, [60, 100, 100])  # high soil moisture
+
+        # membership functions for light level
+        light_level['dark'] = fuzz.trimf(light_level.universe, [0, 0, 30])  # low light level
+        light_level['medium'] = fuzz.trimf(light_level.universe, [20, 50, 80])  # moderate light level
+        light_level['bright'] = fuzz.trimf(light_level.universe, [70, 100, 100])  # high light level
+
+        # membership functions for temperature
+        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 15])  # low temperature
+        temperature['moderate'] = fuzz.trimf(temperature.universe, [10, 20, 30])  # moderate temperature
+        temperature['hot'] = fuzz.trimf(temperature.universe, [25, 40, 40])  # high temperature
+
+        # membership functions for watering frequency
+        watering_freq['frequent'] = fuzz.trimf(watering_freq.universe, [0, 0, 4])  # water often
+        watering_freq['moderate'] = fuzz.trimf(watering_freq.universe, [2, 5, 8])  # water moderately
+        watering_freq['infrequent'] = fuzz.trimf(watering_freq.universe, [6, 10, 10])  # water rarely
+
+        # membership functions for light adjustment (0–100%)
+        light_adjustment['decrease'] = fuzz.trimf(light_adjustment.universe, [0, 0, 30])  # reduce light
+        light_adjustment['maintain'] = fuzz.trimf(light_adjustment.universe, [25, 50, 75])  # no change
+        light_adjustment['increase'] = fuzz.trimf(light_adjustment.universe, [70, 100, 100])  # increase light
+
+        # membership functions for temperature adjustment (0–100%)
+        temp_adjustment['decrease'] = fuzz.trimf(temp_adjustment.universe, [0, 0, 30])  # reduce temperature
+        temp_adjustment['maintain'] = fuzz.trimf(temp_adjustment.universe, [25, 50, 75])  # no change
+        temp_adjustment['increase'] = fuzz.trimf(temp_adjustment.universe, [70, 100, 100])  # increase temperature
+
+        # fuzzy rules for watering frequency
+        rule1 = ctrl.Rule(soil_moisture['dry'] & (light_level['bright'] | temperature['hot']), watering_freq['frequent'])
+        rule2 = ctrl.Rule(soil_moisture['dry'] & light_level['medium'] & temperature['moderate'], watering_freq['frequent'])
+        rule3 = ctrl.Rule(soil_moisture['dry'] & light_level['dark'] & temperature['cold'], watering_freq['moderate'])
+        rule4 = ctrl.Rule(soil_moisture['moist'] & (light_level['bright'] | temperature['hot']), watering_freq['moderate'])
+        rule5 = ctrl.Rule(soil_moisture['moist'] & light_level['medium'] & temperature['moderate'], watering_freq['moderate'])
+        rule6 = ctrl.Rule(soil_moisture['moist'] & light_level['dark'] & temperature['cold'], watering_freq['infrequent'])
+        rule7 = ctrl.Rule(soil_moisture['wet'], watering_freq['infrequent'])
+
+        # fuzzy rules for light adjustment
+        rule8 = ctrl.Rule(light_level['dark'], light_adjustment['increase'])
+        rule9 = ctrl.Rule(light_level['medium'], light_adjustment['maintain'])
+        rule10 = ctrl.Rule(light_level['bright'], light_adjustment['decrease'])
+
+        # fuzzy rules for temperature adjustment
+        rule11 = ctrl.Rule(temperature['cold'], temp_adjustment['increase'])
+        rule12 = ctrl.Rule(temperature['moderate'], temp_adjustment['maintain'])
+        rule13 = ctrl.Rule(temperature['hot'], temp_adjustment['decrease'])
+
+        # build control system and simulator
+        plant_care_ctrl = ctrl.ControlSystem([
+            rule1, rule2, rule3, rule4, rule5, rule6, rule7,
+            rule8, rule9, rule10, rule11, rule12, rule13
+        ])
+        plant_care_simulator = ctrl.ControlSystemSimulation(plant_care_ctrl)
+
+        return plant_care_simulator
+    except Exception:
+        return None
+
 
 def comfort_analysis(): # define the comfort analysis function, this is used to analyse the comfort of the user
-    global comfort_simulator # define the comfort simulator as a global variable, so it can be used in the other functions
+    global comfort_simulator # declare the comfort simulator as global so it can be accessed and modified
 
     try: # try to execute the comfort analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -210,6 +257,9 @@ def comfort_analysis(): # define the comfort analysis function, this is used to 
         if comfort_simulator is None: # check again if the simulator is still None (meaning initialisation failed)
             return jsonify({"error": "Fuzzy logic system is not initialised"}), 500 # return an error message and 500 status if initialisation failed
         
+        temperature = avoid_fuzzy_edge(temperature, 0, 50) # ensure the temperature is within the valid range
+        humidity = avoid_fuzzy_edge(humidity, 0, 100) # ensure the humidity is within the valid range
+
         comfort_simulator.input['temperature'] = temperature # assign the received temperature value to the 'temperature' input variable of the simulator
         comfort_simulator.input['humidity'] = humidity # assign the received humidity value to the 'humidity' input variable of the simulator
         
@@ -224,6 +274,11 @@ def comfort_analysis(): # define the comfort analysis function, this is used to 
             comfort_description = "Acceptable" # set the description to "Acceptable"
         else: # if the comfort level is 70 or greater
             comfort_description = "Comfortable" # set the description to "Comfortable"
+
+        # safety check for extreme raw values
+        warning = None
+        if temperature > 45 or humidity < 10:
+            warning = "Extreme temperature or humidity detected. Comfort reading may not reflect safety conditions."
         
         comfort_messages = { # create a dictionary mapping the comfort descriptions to longer, user-friendly messages
             "Uncomfortable": "The current conditions are uncomfortable. You might want to adjust the temperature or humidity.", # set the message for the uncomfortable comfort level
@@ -245,6 +300,7 @@ def comfort_analysis(): # define the comfort analysis function, this is used to 
                     "interpretation": "dry" if humidity < 30 else ("normal" if humidity < 70 else "humid") # set the interpretation to the humidity
                 }
             },
+            "warning": warning,
             "result": f"Comfort Level: {round(comfort_level, 2)}/100 ({comfort_description}). {comfort_messages[comfort_description]}" # create a result string to hold the comfort analysis results
         }
         
@@ -255,7 +311,7 @@ def comfort_analysis(): # define the comfort analysis function, this is used to 
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def air_quality_analysis(): # define the air_quality_analysis function to analyse the air quality
-    global air_quality_simulator # define the air quality simulator as a global variable, so it can be used in the other functions
+    global air_quality_simulator # declare the air_quality_simulator variable as global to access it within the function
     
     try: # try to execute the air quality analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -281,6 +337,9 @@ def air_quality_analysis(): # define the air_quality_analysis function to analys
         if air_quality_simulator is None: # check again if the simulator is still None (meaning initialisation failed)
             return jsonify({"error": "Air quality fuzzy system is not initialised"}), 500 # return an error message and 500 status code if initialisation failed
         
+        co2 = avoid_fuzzy_edge(co2, 300, 2000) # ensure the co2 is within the valid range
+        pm25 = avoid_fuzzy_edge(pm25, 0, 100) # ensure the pm25 is within the valid range
+
         air_quality_simulator.input['co2'] = co2 # assign the received co2 value to the 'co2' input variable of the simulator
         air_quality_simulator.input['pm25'] = pm25 # assign the received pm25 value to the 'pm25' input variable of the simulator
         
@@ -326,7 +385,7 @@ def air_quality_analysis(): # define the air_quality_analysis function to analys
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def light_comfort_analysis(): # define the light_comfort_analysis function to analyse the light comfort
-    global light_simulator # define the light simulator as a global variable, so it can be used in the other functions
+    global light_simulator # declare the light_simulator variable as global to access it within the function
     
     try: # try to execute the light comfort analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -335,7 +394,7 @@ def light_comfort_analysis(): # define the light_comfort_analysis function to an
             return jsonify({"error": "No data provided"}), 400 # return an error message and 400 status code if no data exists
         
         intensity = data.get('intensity') # get the value associated with the 'intensity' key from the data
-        colour_temp = data.get('colour_temp') # get the value associated with the 'colo r_temp' key from the data
+        colour_temp = data.get('colour_temp') # get the value associated with the 'colour_temp' key from the data
         
         if intensity is None or colour_temp is None: # check if either the intensity or colour_temp value is missing
             return jsonify({"error": "Light intensity and colour temperature values are required"}), 400 # return an error message and 400 status code if values are missing
@@ -352,6 +411,9 @@ def light_comfort_analysis(): # define the light_comfort_analysis function to an
         if light_simulator is None: # check again if the simulator is still None (meaning initialisation failed)
             return jsonify({"error": "Light comfort fuzzy system is not initialised"}), 500 # return an error message and 500 status code if initialisation failed
         
+        intensity = avoid_fuzzy_edge(intensity, 0, 1000) # ensure the intensity is within the valid range
+        colour_temp = avoid_fuzzy_edge(colour_temp, 2000, 6500) # ensure the colour_temp is within the valid range
+
         light_simulator.input['intensity'] = intensity # assign the received intensity value to the 'intensity' input variable of the simulator
         light_simulator.input['colour_temp'] = colour_temp # assign the received colour_temp value to the 'colour_temp' input variable of the simulator
         
@@ -397,7 +459,7 @@ def light_comfort_analysis(): # define the light_comfort_analysis function to an
         return jsonify({"error": error_msg}), 500 # return the error message and 500 status code
 
 def plant_care_analysis(): # define the plant care analysis function
-    global plant_care_simulator # define the plant care simulator as a global variable, so it can be used in the other functions
+    global plant_care_simulator # declare the plant_care_simulator variable as global to access it within the function
     
     try: # try to execute the plant care analysis logic
         data = request.json # get the JSON data from the incoming request
@@ -428,6 +490,10 @@ def plant_care_analysis(): # define the plant care analysis function
         if plant_care_simulator is None: # check again if the simulator is still None (meaning initialisation failed)
             return jsonify({"error": "Plant care fuzzy system is not initialised"}), 500 # return an error message and 500 status code if initialisation failed
         
+        soil_moisture = avoid_fuzzy_edge(soil_moisture, 0, 100) # ensure the soil_moisture is within the valid range
+        light_level = avoid_fuzzy_edge(light_level, 0, 100) # ensure the light_level is within the valid range
+        temperature = avoid_fuzzy_edge(temperature, 0, 40) # ensure the temperature is within the valid range
+        
         plant_care_simulator.input['soil_moisture'] = soil_moisture # assign the received soil_moisture value to the 'soil_moisture' input variable of the simulator
         plant_care_simulator.input['light_level'] = light_level # assign the received light_level value to the 'light_level' input variable of the simulator
         plant_care_simulator.input['temperature'] = temperature # assign the received temperature value to the 'temperature' input variable of the simulator
@@ -437,7 +503,47 @@ def plant_care_analysis(): # define the plant care analysis function
         watering_freq = round(plant_care_simulator.output['watering_freq']) # retrieve the calculated output value for 'watering_freq' from the simulator
         light_adjustment = round(plant_care_simulator.output['light_adjustment']) # retrieve the calculated output value for 'light_adjustment' from the simulator
         temp_adjustment = round(plant_care_simulator.output['temp_adjustment']) # retrieve the calculated output value for 'temp_adjustment' from the simulator
+
+        plant = plant_type.lower().strip() # set the plant type to lower case and strip any leading or trailing whitespace
+        known_plants = {"succulent", "cactus", "fern", "orchid"} # set of known plant types
+        if plant not in known_plants: # check if the plant type is not in the known plants
+            plant = "general" # set the plant type to 'general' if not known
         
+        # 🌱 Apply plant-specific overrides to fuzzy outputs
+        if plant in {"succulent", "cactus"}:
+            # Succulents prefer infrequent watering
+            watering_freq = min(watering_freq + 2, 10)
+
+            # Require high light — if low, override to increase light aggressively
+            if light_level < 60:
+                light_adjustment = max(light_adjustment, 70)  # force increase
+
+            # Require warmth — override if dangerously cold
+            if temperature < 5:
+                temp_adjustment = max(temp_adjustment, 70)  # urge user to warm up
+
+            # Prevent unnecessary heating
+            temp_adjustment = min(temp_adjustment, 60)
+
+        elif plant == "fern":
+            watering_freq = max(watering_freq - 2, 1)
+
+            if light_level > 70:
+                light_adjustment = min(light_adjustment, 30)
+
+            if temperature < 18:
+                temp_adjustment = max(temp_adjustment, 60)
+
+        elif plant == "orchid":
+            watering_freq = max(watering_freq, 5)
+
+            if light_level < 40:
+                light_adjustment = max(light_adjustment, 70)
+
+            if temperature < 20:
+                temp_adjustment = max(temp_adjustment, 60)
+
+
         if soil_moisture < 30: # check if the soil_moisture is less than 30
             soil_moisture_status = "Dry" # set the status to "Dry"
         elif soil_moisture < 70: # otherwise, check if the soil_moisture is less than 70
@@ -468,35 +574,35 @@ def plant_care_analysis(): # define the plant care analysis function
             watering_recommendation = f"Water your plant every {watering_freq} days. Be careful not to overwater." # set the recommendation to "Water your plant every {watering_freq} days. Be careful not to overwater."
         
         light_recommendation = "" # initialise an empty string to hold the light recommendation
-        if light_adjustment > 3: # check if the light adjustment is greater than 3
+        if light_adjustment >= 70: # check if the light adjustment is greater than or equal to 70
             light_recommendation = "Increase light exposure significantly. Move to a sunnier location." # set the recommendation to "Increase light exposure significantly. Move to a sunnier location."
-        elif light_adjustment > 0: # otherwise, check if the light adjustment is greater than 0
+        elif light_adjustment > 55: # otherwise, check if the light adjustment is greater than 0
             light_recommendation = "Slightly increase light exposure. Consider moving closer to a window." # set the recommendation to "Slightly increase light exposure. Consider moving closer to a window."
-        elif light_adjustment < -3: # otherwise, check if the light adjustment is less than -3
+        elif light_adjustment < 30: # otherwise, check if the light adjustment is less than 30
             light_recommendation = "Decrease light exposure significantly. Move to a shadier location or add a curtain." # set the recommendation to "Decrease light exposure significantly. Move to a shadier location or add a curtain."
-        elif light_adjustment < 0: # otherwise, check if the light adjustment is less than 0
+        elif light_adjustment < 45: # otherwise, check if the light adjustment is less than 45
             light_recommendation = "Slightly decrease light exposure. Move a bit further from direct sunlight." # set the recommendation to "Slightly decrease light exposure. Move a bit further from direct sunlight."
         else: # if the light adjustment is 0 or greater
             light_recommendation = "Current light conditions are appropriate. Maintain current placement." # set the recommendation to "Current light conditions are appropriate. Maintain current placement."
         
         temp_recommendation = "" # initialise an empty string to hold the temperature recommendation
-        if temp_adjustment > 3: # check if the temperature adjustment is greater than 3
+        if temp_adjustment >= 70: # check if the temperature adjustment is greater than or equal to 70
             temp_recommendation = "Increase temperature significantly. Consider moving to a warmer spot or using heating." # set the recommendation to "Increase temperature significantly. Consider moving to a warmer spot or using heating."
-        elif temp_adjustment > 0: # otherwise, check if the temperature adjustment is greater than 0
+        elif temp_adjustment > 55: # otherwise, check if the temperature adjustment is greater than 55
             temp_recommendation = "Slightly increase temperature. Move away from cold drafts." # set the recommendation to "Slightly increase temperature. Move away from cold drafts."
-        elif temp_adjustment < -3: # otherwise, check if the temperature adjustment is less than -3
+        elif temp_adjustment < 30: # otherwise, check if the temperature adjustment is less than 30
             temp_recommendation = "Decrease temperature significantly. Move to a cooler location." # set the recommendation to "Decrease temperature significantly. Move to a cooler location."
-        elif temp_adjustment < 0: # otherwise, check if the temperature adjustment is less than 0
+        elif temp_adjustment < 45: # otherwise, check if the temperature adjustment is less than 45
             temp_recommendation = "Slightly decrease temperature. Avoid placing near heaters or hot windows." # set the recommendation to "Slightly decrease temperature. Avoid placing near heaters or hot windows."
         else: # if the temperature adjustment is 0 or greater
             temp_recommendation = "Current temperature is appropriate. Maintain current conditions." # set the recommendation to "Current temperature is appropriate. Maintain current conditions."
         
         plant_specific_advice = "" # initialise an empty string to hold the plant specific advice
-        if plant_type.lower() == "succulent" or plant_type.lower() == "cactus": # check if the plant type is a succulent or cactus
+        if plant in ["succulent", "cactus"]: # check if the plant type is a succulent or cactus
             plant_specific_advice = "As a succulent/cactus, this plant prefers drier conditions and less frequent watering than most houseplants." # set the advice to "As a succulent/cactus, this plant prefers drier conditions and less frequent watering than most houseplants."
-        elif plant_type.lower() == "fern": # otherwise, check if the plant type is a fern
-            plant_specific_advice = "Ferns generally prefer higher humidity and consistent moisture. Consider misting regularly." # set the advice to "Ferns generally prefer higher humidity and consistent moisture. Consider misting regularly."
-        elif plant_type.lower() == "orchid": # otherwise, check if the plant type is an orchid
+        elif plant == "fern": # otherwise, check if the plant type is a fern
+            plant_specific_advice = "Ferns generally prefer higher humidity and regular watering. Consider misting regularly." # set the advice to "Ferns generally prefer higher humidity and consistent moisture. Consider misting regularly."
+        elif plant == "orchid": # otherwise, check if the plant type is an orchid
             plant_specific_advice = "Orchids have specific care requirements. They prefer bright indirect light and should be watered thoroughly but infrequently." # set the advice to "Orchids have specific care requirements. They prefer bright indirect light and should be watered thoroughly but infrequently."
         
         response = { # create a response dictionary to hold the plant care analysis results

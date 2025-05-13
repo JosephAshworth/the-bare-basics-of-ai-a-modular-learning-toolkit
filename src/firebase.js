@@ -1,11 +1,9 @@
 // the firebase configuration file to connect to the firebase project
 
 // import the firebase library
-// with the functions for initialising the app, getting the auth, firestore and analytics
+// with the functions for initialising the app and getting the auth
 import { initializeApp } from "firebase/app"; 
 import { getAuth } from "firebase/auth"; 
-import { getFirestore } from "firebase/firestore"; 
-import { getAnalytics } from "firebase/analytics"; 
 
 // whether to use local credentials or not
 // if true, the credentials are loaded from the firebase-credentials.json file
@@ -51,62 +49,29 @@ const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
 // initialise the firebase app
 let app; 
 let auth; 
-let db; 
-let analytics; 
-let firebaseInitialised = false; 
 
 // if there are missing keys
 if (missingKeys.length > 0) { 
     console.error(`Firebase initialisation failed: Missing required environment variables: ${missingKeys.join(', ')}`); 
     auth = { currentUser: null }; // set the auth to null
 
-    // Set the database to a mock object, as it is not needed
-    db = { collection: () => ({ doc: () => ({ get: () => Promise.resolve({ exists: false }) }) }) }; 
+
 } else { 
     try {
       // initialise the firebase app
       app = initializeApp(firebaseConfig); 
       auth = getAuth(app); 
-      db = getFirestore(app); 
 
-      // if the measurement ID is present, initialise the analytics
-      if (firebaseConfig.measurementId) { 
-        try {
-            analytics = getAnalytics(app); 
-        } catch (analyticsError) {
-            console.warn("Firebase Analytics initialisation failed:", analyticsError.message); 
-            analytics = null; // set the analytics to null if it fails
-        }
-      } else { 
-          analytics = null; // set the analytics to null if it is not present
-      }
 
-      // indicate that firebase has been initialised successfully
-      firebaseInitialised = true;
+
       console.log("Firebase initialised successfully");
     } catch (error) { // if the initialisation fails, set the auth, db and analytics to null
       console.error("Firebase initialisation failed:", error.message); 
       auth = { currentUser: null }; 
-      db = { collection: () => ({ doc: () => ({ get: () => Promise.resolve({ exists: false }) }) }) };
     }
 }
 
-// check if firebase has been initialised successfully
-const checkFirebaseConnection = async () => { 
-  if (!firebaseInitialised) return false; 
-  
-  try {
-    // test to see if the database is connected
-    // using a test document to check the connection (not actually present in the database)
-    const testDoc = db.collection('_connection_test').doc('test'); 
-    await testDoc.get(); 
-    return true; // return true if the connection is successful
-  } catch (error) {
-    console.error("Firebase connection test failed:", error.message); 
-    return false; 
-  }
-};
 
-// export the auth, db, analytics and firebaseInitialised variables
-// so that they can be used in other files
-export { auth, db, analytics, firebaseInitialised, checkFirebaseConnection }; 
+
+// export the auth so that it can be used in other files
+export { auth };

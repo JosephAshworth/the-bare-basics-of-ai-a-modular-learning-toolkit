@@ -1,0 +1,55 @@
+{
+  "name": "the-bare-basics-of-ai-a-modular-learning-toolkit",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.11.16",
+    "@mui/material": "^5.13.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "autoprefixer": "^10.4.16",
+    "axios": "^1.8.4",
+    "chart.js": "^4.4.1",
+    "firebase": "^10.14.1",
+    "postcss": "^8.4.31",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.11.1",
+    "react-scripts": "^5.0.1",
+    "react-slick": "^0.30.3",
+    "react-zoom-pan-pinch": "^3.7.0",
+    "slick-carousel": "^1.8.1",
+    "tailwindcss": "^3.4.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "echo \"Terminal 1: Activate backend/venv, then run 'npm run run:backend:setup-start'. Terminal 2: Run 'npm run start:frontend'.\"",
+    "run:backend:setup-start": "cd backend && pip install -r requirements.txt && python routes/download_models.py && python app.py",
+    "start:frontend": "npm install && npx react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -12,7 +12,7 @@ import {
 
 import { useTheme } from '@mui/material/styles';
 
-// get the colours for the emotions from the utils file
+// get the colours for the emotions from the utilities file
 import { getEmotionColour } from './EmotionDetectionUtilities';
 
 const EmotionResults = ({ 

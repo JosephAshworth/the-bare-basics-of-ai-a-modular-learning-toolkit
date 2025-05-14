@@ -180,18 +180,6 @@ const MachineLearningPage = () => {
     setColumnsToDiscard([]);
   }, [dataset]);
 
-  // when the target warning occurs, set the error
-  useEffect(() => {
-    if (targetWarning) {
-      setError(targetWarning);
-    } else {
-      if (error === `Target feature "${targetFeature}" has more than 5 unique values. For classification tasks, it should have 5 or fewer unique values.` || 
-          (error && error.startsWith('Target feature') && error.includes('unique values'))) {
-        setError('');
-      }      
-    }
-  }, [targetWarning, error, targetFeature]);
-
   // when the component unmounts, send the time spent on the module page to the backend
   useEffect(() => {
     return () => {

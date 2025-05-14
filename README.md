@@ -10,7 +10,7 @@ This project provides a modular and interactive web interface for learning funda
   Required for the frontend. Download from [https://nodejs.org/](https://nodejs.org/)
 
 * **Python 3**
-  Required for the backend Flask server and machine learning functionality. Download from [https://www.python.org/](https://www.python.org/)
+  Required for the backend Flask server. Download from [https://www.python.org/](https://www.python.org/)
 
   (On the first screen, tick “Add Python to PATH”)
 

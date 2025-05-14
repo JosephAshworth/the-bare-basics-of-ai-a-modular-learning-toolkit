@@ -5,23 +5,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore # for firebase integration
-
-# load the firebase credentials from the environment variable, if deployed
-def load_firebase_credentials():
-    firebase_creds_json = os.environ.get('FIREBASE_CREDENTIALS_JSON')
-    if firebase_creds_json:
-        try:
-            cred_file_path = os.path.join(os.path.dirname(__file__), 'firebase-credentials.json')
-            with open(cred_file_path, 'w') as f:
-                f.write(firebase_creds_json)
-            print("Firebase credentials loaded from environment variable and saved to file.")
-            return True
-        except Exception as e:
-            print(f"Failed to load or save Firebase credentials from environment: {str(e)}")
-            return False
-    else:
-        print("FIREBASE_CREDENTIALS_JSON environment variable not set.")
-        return False
+from dotenv import load_dotenv # for loading the environment variables
 
 # create the models directory if it doesn't exist
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved_models")
@@ -31,35 +15,54 @@ os.makedirs("debug", exist_ok=True)
 # create the flask app
 app = Flask(__name__)
 
-# load the firebase credentials
-load_firebase_credentials()
+# get the root directory (one level up from backend) as the .env file is here
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(root_dir, '.env')
 
-# check if the firebase credentials file exists (when running locally)
-cred_path = os.path.join(os.path.dirname(__file__), 'firebase-credentials.json')
+# check if the environment is production
+is_production = os.environ.get('ENVIRONMENT') == 'production'
+
+# only load .env file in development
+if not is_production:
+    load_dotenv(env_path)
+    print(f"Using local .env file")
+else:
+    print("Using environment variables from deployment platform")
+
+
 firebase_initialised = False # flag to check if firebase is initialised
 
-# if the credentials file exists, initialise firebase
-if os.path.exists(cred_path):
-    try:
-        cred = credentials.Certificate(cred_path)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
-            print("Firebase Admin SDK initialised successfully.")
-            firebase_initialised = True
-            db = firestore.client()
-        else:
-            print("Firebase Admin SDK already initialised (likely due to reloader).")
-            firebase_initialised = True
-            db = firestore.client()
-    except ValueError as e:
-         print(f"Error initializing Firebase Admin SDK in app.py: {e}")
-         db = None
-    except Exception as e:
-        print(f"Unexpected error initialising Firebase Admin SDK in app.py: {e}")
-        db = None
-else:
-    print("Firebase credentials file not found in app.py. Firebase NOT initialised.")
+# get the firebase configuration credentials from the environment variables
+try:
+    firebase_config = {
+        "type": "service_account",
+        "project_id": os.environ.get('FIREBASE_PROJECT_ID'),
+        "private_key_id": os.environ.get('FIREBASE_PRIVATE_KEY_ID'),
+        "private_key": os.environ.get('FIREBASE_PRIVATE_KEY').replace('\\n', '\n'),
+        "client_email": os.environ.get('FIREBASE_CLIENT_EMAIL'),
+        "client_id": os.environ.get('FIREBASE_CLIENT_ID'),
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": os.environ.get('FIREBASE_CLIENT_CERT_URL'),
+        "universe_domain": "googleapis.com"
+    }
+
+    # initialise firebase
+    if not firebase_admin._apps:
+        cred = credentials.Certificate(firebase_config)
+        firebase_admin.initialize_app(cred)
+        print("Firebase Admin SDK initialised successfully.")
+        firebase_initialised = True
+        db = firestore.client()
+    else:
+        print("Firebase Admin SDK already initialised.")
+        firebase_initialised = True
+        db = firestore.client()
+except Exception as e:
+    print(f"Error initialising Firebase Admin SDK: {e}")
     db = None
+
 app.config['FIREBASE_INITIALISED'] = firebase_initialised
 
 # debugging route to check if the API is running
@@ -74,7 +77,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 frontend_url = os.environ.get('FRONTEND_URL')
 ENV = os.environ.get('ENVIRONMENT', 'development')
 
-# set the origins for the CORS policy, if the environment is production, use the frontend url, otherwise use the local host
+# set the origins for the CORS policy
+# if the environment is production, use the frontend url, otherwise use the local host
 if ENV == 'production' and frontend_url:
     origins = [frontend_url]
 else:

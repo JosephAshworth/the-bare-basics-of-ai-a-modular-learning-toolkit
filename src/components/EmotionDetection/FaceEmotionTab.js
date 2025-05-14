@@ -69,7 +69,7 @@ const FaceEmotionTab = () => {
   };
 
   const handleUploadClick = () => {
-    fileInputRef.current.click();
+    fileInputRef.current.click(); // open the file explorer on click
   };
 
   const handleReset = () => {

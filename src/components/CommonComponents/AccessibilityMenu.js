@@ -92,7 +92,7 @@ function AccessibilityMenu() {
 
               // while hovered over, change the background colour to the dark grey or light grey depending on the theme
               '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+                bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200]
               }
             }}
           >

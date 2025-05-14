@@ -19,7 +19,8 @@ import {
   Button, 
   IconButton, 
   Typography, 
-  useMediaQuery 
+  useMediaQuery,
+  Paper
 } from '@mui/material';
 
 import { useTheme } from '@mui/material/styles';
@@ -49,7 +50,7 @@ import CompleteModuleButton from '../components/CommonComponents/CompleteModuleB
 import { useProgress } from '../context/ProgressContext';
 
 const EmotionDetectionPage = () => {
-  const [activeTab, setActiveTab] = useState(0); // the active tab for the detection type
+  const [activeTab, setActiveTab] = useState(0); // the active tab for the detection type, initially the face emotion tab
   const [isInfoDialogOpen, setInfoDialogOpen] = useState(false); // the open state for the info dialog
   
   const theme = useTheme(); // the theme for the app
@@ -102,9 +103,10 @@ const EmotionDetectionPage = () => {
           Have a go at testing out the different emotion detectors below
         </Typography>
 
-        <Container 
+        <Paper 
           maxWidth="lg"
           sx={{
+            border: `1px solid ${theme.palette.divider}`,
             p: 4,
             borderRadius: '16px',
             backgroundColor: theme.palette.background.paper,
@@ -176,7 +178,7 @@ const EmotionDetectionPage = () => {
             <Box
               sx={{ 
                 p: { xs: 2, md: 4 },
-                bgcolor: 'background.paper'
+                bgcolor: 'inherit'
               }}
             > 
               <Box sx={{ display: activeTab === 0 ? 'block' : 'none' }}>
@@ -227,7 +229,7 @@ const EmotionDetectionPage = () => {
               moduleName="Emotion Detection"
             />
           </Box>
-        </Container>
+        </Paper>
 
         {/* the dialog to show the information about the emotion detection methods, opened as an overlay */}
         <Dialog 

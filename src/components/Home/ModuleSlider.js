@@ -202,7 +202,7 @@ const ModuleSlider = () => {
                       alignItems: 'center',
                       gap: 4
                     }}>
-                      <Box className="icon-circle-bg" sx={{ 
+                      <Box sx={{ 
                         bgcolor: theme.palette.mode === 'dark' ? colourPalette.main + '30' : colourPalette.light + '30',
                         borderRadius: '50%',
                         width: { xs: '80px', md: '100px' }, // the width is 80px for small screens and 100px for medium screens

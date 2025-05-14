@@ -101,7 +101,7 @@ const DatasetSelection = ({
           display: 'flex',
           alignItems: 'center',
           gap: 1, // add a gap between the icon and the text
-          color: theme.palette.primary.main,
+          color: theme.palette.primary.main
         }}>
           <PlayArrowIcon /> Dataset Selection
         </Typography>

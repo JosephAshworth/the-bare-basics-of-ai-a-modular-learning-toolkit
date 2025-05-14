@@ -292,7 +292,7 @@ const MachineLearningPage = () => {
                 onModelTypeChange={(e) => setModelType(e.target.value)}
                 onTestSizeChange={(e, newValue) => setTestSize(newValue)}
                 onMinSamplesSplitChange={(e) => setMinSamplesSplit(parseInt(e.target.value, 10) || 2)} // fall back to 2 if the value is not a number
-                onNNeighborsChange={(e) => setNNeighbors(parseInt(e.target.value, 10) || 5)} // fall back to 5 if the value is not a number
+                onNNeighborsChange={(e) => setNNeighbors(parseInt(e.target.value, 10) || 1)} // fall back to 1 if the value is not a number
               />
               <Divider sx={{ my: 3 }} />
 

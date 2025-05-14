@@ -273,7 +273,7 @@ const TextEmotionTab = () => {
             variant="body2"
             sx={{ mb: 1 }}
           >
-            <strong>• Bias:</strong> Odbal (Inner Mongolia University) explored how certain text emotion detectors assigning certain emotions to a gender. For example, feelings such as "joy" and "sadness" tend more towards women, whereas "anger" tends more towards men.
+            <strong>• Bias:</strong> Odbal (Inner Mongolia University) explored how certain text emotion detectors assign certain emotions to a gender. For example, feelings such as "joy" and "sadness" tend more towards women, whereas "anger" tends more towards men.
           </Typography>
           <Typography
             variant="body2"

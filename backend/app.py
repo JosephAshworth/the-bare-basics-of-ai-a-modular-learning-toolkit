@@ -10,7 +10,6 @@ from dotenv import load_dotenv # for loading the environment variables
 # create the models directory if it doesn't exist
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved_models")
 os.makedirs(MODELS_DIR, exist_ok=True)
-os.makedirs("debug", exist_ok=True)
 
 # create the flask app
 app = Flask(__name__)

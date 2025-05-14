@@ -135,31 +135,28 @@ To enable Firebase functionality on the backend:
 
 4. Click 'Generate new private key' to download the service account credentials JSON
 
-5. Rename the file to:
+5. Open the downloaded JSON file and take note of these values:
+   - project_id
+   - private_key_id
+   - private_key
+   - client_email
+   - client_id
+   - client_x509_cert_url
+
+6. Create a `.env` file in the root directory of your project and add these environment variables:
 
    ```
-   firebase-credentials.json
+   FIREBASE_PROJECT_ID=project_id
+   FIREBASE_PRIVATE_KEY_ID=private_key_id
+   FIREBASE_PRIVATE_KEY=private_key
+   FIREBASE_CLIENT_EMAIL=client_email
+   FIREBASE_CLIENT_ID=client_id
+   FIREBASE_CLIENT_CERT_URL=client_x509_cert_url
    ```
 
-6. Move this file into the `backend/` directory
+   Make sure to replace the placeholder values with your actual Firebase credentials.
+   Make sure to exclude the double quotes from the credentials values in the `.env` file.
 
-7. Ensure it follows this format (where each property value placeholder is replaced with the actual values from the JSON file):
-
-   ```json
-   {
-     "type": "service_account",
-     "project_id": "your-project-id",
-     "private_key_id": "your_private_key_id",
-     "private_key": "your_private_key",
-     "client_email": "your_client_email",
-     "client_id": "your_client_id",
-     "auth_uri": "your_auth_uri",
-     "token_uri": "your_token_uri",
-     "auth_provider_x509_cert_url": "your_auth_provider_x509_cert_url",
-     "client_x509_cert_url": "your_client_x509_cert_url",
-     "universe_domain": "googleapis.com"
-   }
-   ```
 
 8. **Start the backend Flask server:**
 
@@ -189,31 +186,31 @@ To enable Firebase functionality on the backend:
 
       ```json
       {
-        "apiKey": "YOUR_API_KEY",
-        "authDomain": "your_authDomain",
-        "projectId": "your_projectId",
+        "apiKey": "your-api-key",
+        "authDomain": "your-auth-domain",
+        "projectId": "your-project-id",
         "storageBucket": "your_storageBucket",
         "messagingSenderId": "your_messagingSenderId",
         "appId": "your_appId",
-        "measurementId": "Gyour_measurementId"
+        "measurementId": "your_measurementId"
       }
       ```
 
-   6. Create a file in the `src/` directory named:
+   6. Add these values to your `.env` file in the root directory:
 
       ```
-      firebase-credentials.json
+      REACT_APP_FIREBASE_API_KEY=your-api-key
+      REACT_APP_FIREBASE_AUTH_DOMAIN=your-auth-domain
+      REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+      REACT_APP_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+      REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_messagingSenderId
+      REACT_APP_FIREBASE_APP_ID=your_appId
+      REACT_APP_FIREBASE_MEASUREMENT_ID=your_measurementId
       ```
 
-   7. Paste the configuration object into that file, replacing all placeholders with your actual values.
+      Again, make sure to replace the placeholder values with your actual Firebase credentials.
+      Make sure to exclude the double quotes from the credentials values in the `.env` file.
 
-   8. Create a `.env` file in the root directory with the following content:
-
-      ```
-      REACT_APP_USE_LOCAL_FIREBASE_CREDENTIALS=true
-      ```
-
-      This will ensure the application uses the locally-defined credentials as opposed to the deployed environment variables.
 
 3. **Start the React development server:**
 

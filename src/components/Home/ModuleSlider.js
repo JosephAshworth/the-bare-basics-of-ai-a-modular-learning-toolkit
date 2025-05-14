@@ -14,7 +14,7 @@ import Slider from 'react-slick'; // a special slider that renders a carousel so
 
 
 import "slick-carousel/slick/slick.css"; // import the default styles for the slick carousel to ensure proper display
-import "slick-carousel/slick/slick-theme.css"; // import the theme styles for the slick carousel to apply additional design elements
+import "slick-carousel/slick/slick-theme.css"; // import the theme styles for the slick carousel to apply additional design elements (such as the dots and arrows)
 
 import { useNavigate } from 'react-router-dom';
 

@@ -11,7 +11,6 @@ import { useTheme } from '@mui/material/styles';
 import HeroSection from '../components/Home/HeroSection';
 import ModuleSlider from '../components/Home/ModuleSlider';
 import FeatureSection from '../components/Home/FeatureSection';
-import InstructionsDialog from '../components/Home/InstructionsDialog';
 
 function HomePage() {
   const theme = useTheme();

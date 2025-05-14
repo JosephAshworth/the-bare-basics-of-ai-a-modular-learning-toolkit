@@ -121,7 +121,7 @@ function Header() {
   return (
     <>
       <AppBar
-        position="static" // position the app bar relative to its normal position in the document flow
+        position="sticky" // cause the header to stick to the top of the screen when scrolling
         sx={{
           backgroundColor: theme.palette.background.paper,
           boxShadow: theme.shadows[2] // add a shadow around the app bar
@@ -129,7 +129,7 @@ function Header() {
       >
         <Toolbar>
           {/* prevent the box from shrinking when the flex container is resized */}
-          <Box className="flex-shrink-0"> 
+          <Box> 
             <SmartToyIcon 
               sx={{ 
                 fontSize: 36,
@@ -139,7 +139,7 @@ function Header() {
           </Box>
 
           {/* allow the box to grow and fill available space, using flexbox to center its content */}
-          <Box className="flex-grow flex justify-center">
+          <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
             <Typography 
               sx={{
                 textAlign: 'center',
@@ -155,7 +155,7 @@ function Header() {
 
           {/* if the screen is not mobile and the user is authenticated, show the profile icon and menu */}
           {!isMobile && user && (
-            <Box className="flex-shrink-0">
+            <Box>
               <IconButton onClick={handleMenuOpen}>
 
                 {/* show the user's profile picture or a default icon of their initials */}
@@ -176,7 +176,7 @@ function Header() {
           )}
 
           {isMobile && (
-            <Box className="flex-shrink-0">
+            <Box>
               <IconButton 
                 onClick={handleDrawerOpen}
                 aria-label="menu"

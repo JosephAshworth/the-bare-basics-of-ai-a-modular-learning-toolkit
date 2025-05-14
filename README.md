@@ -36,17 +36,6 @@ This project provides a modular and interactive web interface for learning funda
    ```
    and then run the installation command again.
 
-3. **Note for Windows users:**  
-
-   Some Python packages require Microsoft Visual C++ Build Tools to compile. 
-
-   If you see an error about needing "Microsoft Visual C++ 14.0 or greater," download and install the Build Tools from:  
-   https://visualstudio.microsoft.com/visual-cpp-build-tools/
-   
-   In the installer, select "Desktop development with C++" and complete the installation.  
-
-   Then restart your terminal and run the `pip install -r requirements.txt` command again.
-
 ---
 
 ## Running the Application
@@ -107,6 +96,17 @@ You must run the backend server and the frontend development server in separate 
    ```bash
    pip install -r requirements.txt
    ```
+
+   **Note for Windows users:**  
+
+   Some Python packages require Microsoft Visual C++ Build Tools to compile. 
+
+   If you see an error about needing "Microsoft Visual C++ 14.0 or greater," download and install the Build Tools from:  
+   https://visualstudio.microsoft.com/visual-cpp-build-tools/
+   
+   In the installer, select "Desktop development with C++" and complete the installation.  
+
+   Then restart your terminal and run the `pip install -r requirements.txt` command again.
 
 5. **Download required models:**
 

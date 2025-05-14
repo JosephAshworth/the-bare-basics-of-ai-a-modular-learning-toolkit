@@ -119,7 +119,7 @@ const Login = () => {
           {/* if there is an error, display the error message */}
           {error && (
             <Alert
-              severity="error"
+              severity="error" // display the error message in red
               sx={{
                 width: '100%',
                 mb: 2

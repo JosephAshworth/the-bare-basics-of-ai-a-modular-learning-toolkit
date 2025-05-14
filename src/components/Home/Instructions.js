@@ -1,7 +1,6 @@
 // component for displaying instructions on how to use the application
 // this component displays a dialog with instructions on how to use the application
 // it allows the user to open the dialog and close it
-// this will be shown for the submission, but deleted later on
 
 import { useState } from 'react';
 

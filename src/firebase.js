@@ -5,34 +5,8 @@
 import { initializeApp } from "firebase/app"; 
 import { getAuth } from "firebase/auth"; 
 
-// whether to use local credentials or not
-// if true, the credentials are loaded from the firebase-credentials.json file
-// if not, the credentials are loaded from the environment variables (deployment)
-const useLocalCredentials = process.env.REACT_APP_USE_LOCAL_FIREBASE_CREDENTIALS === 'true'; 
-
-let firebaseCredentials; 
-
-// determine the firebase credentials to use
-if (useLocalCredentials) { 
-  try { 
-    firebaseCredentials = require("./firebase-credentials.json"); 
-  } catch (error) { 
-    console.error('Failed to load local credentials:', error); 
-    firebaseCredentials = null; 
-  }
-}
-
-// determine the firebase config to use
-// depending on whether local credentials are used or not
-const firebaseConfig = (useLocalCredentials && firebaseCredentials) ? { 
-  apiKey: firebaseCredentials.apiKey,
-  authDomain: firebaseCredentials.authDomain,
-  projectId: firebaseCredentials.projectId,
-  storageBucket: firebaseCredentials.storageBucket,
-  messagingSenderId: firebaseCredentials.messagingSenderId,
-  appId: firebaseCredentials.appId,
-  measurementId: firebaseCredentials.measurementId
-} : { 
+// firebase credentials using environment variables
+const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
@@ -40,8 +14,8 @@ const firebaseConfig = (useLocalCredentials && firebaseCredentials) ? {
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
-};
-
+}; 
+ 
 // determine the missing keys in the firebase config, if any
 const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId']; 
 const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]); 

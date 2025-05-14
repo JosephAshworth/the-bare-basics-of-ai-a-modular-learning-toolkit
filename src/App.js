@@ -48,10 +48,10 @@ function App() {
     <Router> 
       {/* ensure the application is wrapped in a router to allow programmatic navigation */}
       <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Box position="sticky" top={0} zIndex={1000} component="main" sx={{ flexGrow: 1 }}>
+        <Box position="sticky" top={0} zIndex={1000} component="header">
           <Header /> 
         </Box>
-        <Box component="main" sx={{ flexGrow: 1 }} id="main-content">
+        <Box component="main" id="main-content">
           <Routes> 
             {/* the home page, which is the main page of the application */}
             {/* protected so that only logged in users can access it */}

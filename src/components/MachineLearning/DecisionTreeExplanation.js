@@ -407,7 +407,7 @@ const DecisionTreeExplanation = () => {
                 bgcolor: 'rgba(230, 81, 0, 0.05)',
                 borderBottom: '1px solid rgba(230, 81, 0, 0.1)'
               }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#e65100', }}> 
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#e65100' }}> 
                   Pro Tips
                 </Typography>
               </AccordionSummary>

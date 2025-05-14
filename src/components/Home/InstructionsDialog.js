@@ -56,7 +56,7 @@ const InstructionsDialog = () => {
         onClose={handleCloseInstructions}
         aria-labelledby="instructions-dialog-title"
         aria-describedby="instructions-dialog-description"
-        PaperProps={{ sx: { bgcolor: 'background.paper' } }}
+        PaperProps={{ sx: { bgcolor: 'background.paper' } }} // keeps the background the same while the dialog is open
       >
         <DialogTitle id="instructions-dialog-title" sx={{ color: 'text.primary' }}>
           How to Use This Application

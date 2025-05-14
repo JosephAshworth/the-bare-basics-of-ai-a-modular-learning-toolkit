@@ -21,12 +21,7 @@ This project provides a modular and interactive web interface for learning funda
 
 ## Installation
 
-1. **Clone the repository:**
-
-   ```bash
-   git clone <your-repository-url>
-   cd <repository-folder-name>
-   ```
+1. **Navigate into the project directory**
 
 2. **Install frontend dependencies:**
    *(Run this from the project root directory)*

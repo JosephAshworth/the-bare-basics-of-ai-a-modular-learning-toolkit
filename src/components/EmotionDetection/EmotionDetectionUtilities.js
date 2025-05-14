@@ -133,7 +133,7 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
     setError(null);
     
     const fileExtension = audioFile.name.split('.').pop().toLowerCase();
-    const isCommonFormat = ['wav', 'mp3', 'ogg', 'webm', 'm4a', 'mpeg'].includes(fileExtension); // check for common audio formats
+    const isCommonFormat = ['wav', 'mp3', 'ogg', 'webm'].includes(fileExtension); // check for common audio formats
     
     if (!isCommonFormat) {
       console.warn(`Uncommon audio format: ${fileExtension}. This might cause processing issues.`);

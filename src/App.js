@@ -18,7 +18,7 @@ import Register from './components/Auth/Register';
 // as well as the module pages themselves (which are the main content of the application)
 import Header from './components/CommonComponents/Header'; 
 import HomePage from './pages/HomePage'; 
-import GetStartedPage from './pages/GetStartedPage'; 
+import WelcomePage from './pages/WelcomePage'; 
 import MachineLearningPage from './pages/MachineLearningPage'; 
 import EmotionDetectionPage from './pages/EmotionDetectionPage'; 
 import FuzzyLogicPage from './pages/FuzzyLogicPage'; 
@@ -62,7 +62,7 @@ function App() {
             } /> 
             <Route path="/get-started" element={
               <ProtectedRoute>
-                <GetStartedPage />
+                <WelcomePage />
               </ProtectedRoute>
             } /> 
             <Route path="/machine-learning" element={

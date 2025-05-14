@@ -40,10 +40,13 @@ export const ProgressProvider = ({ children }) => {
 
     try {
       const token = await getAuthToken(); // get the user's auth token to verify them
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}; // set the authorization header with the token if available, otherwise use an empty configuration
+       // set the authorization header with the token if available, otherwise use an empty configuration
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       console.log(`ProgressContext: Calling GET /api/modules/progress`); 
       const response = await apiService.get('/api/modules/progress', config); // fetch the progress data from the backend
-      const newData = response.data || []; // extract the data from the response, defaulting to an empty array if no data is returned
+
+       // extract the data from the response, defaulting to an empty array if no data is returned
+      const newData = response.data || [];
       console.log('ProgressContext: Received progress data:', newData);
       setProgressData(newData); // set the progress data in the state
       console.log('ProgressContext: Set progressData state.');
@@ -74,22 +77,28 @@ export const ProgressProvider = ({ children }) => {
       return { error: "User not logged in" };
     }
 
-    const previousProgress = progressData ? [...progressData] : []; // create a copy of the progress data, if it exists
+     // create a copy of the progress data, if it exists
+    const previousProgress = progressData ? [...progressData] : [];
     setProgressData(prevData => {
-      if (!prevData) return [{ id: moduleId, name: moduleName, completed: completedStatus }]; // if the progress data is not found, return a new array with the module id, name and completed status
-      const existingIndex = prevData.findIndex(p => (p.id || p.moduleId) === moduleId); // find the index of the module in the progress data
+      // if the progress data is not found, return a new array with the module id, name and completed status
+      if (!prevData) return [{ id: moduleId, name: moduleName, completed: completedStatus }]; 
+      // find the index of the module in the progress data
+      const existingIndex = prevData.findIndex(p => (p.id || p.moduleId) === moduleId);
       if (existingIndex > -1) { // if the module is found in the progress data
         const newData = [...prevData]; // create a new array with the progress data
         newData[existingIndex] = { ...newData[existingIndex], completed: completedStatus }; // update the completed status of the module
         return newData; // return the new array
       } else {
-        return [...prevData, { id: moduleId, name: moduleName, completed: completedStatus }]; // if the module is not found in the progress data, return a new array with the module id, name and completed status
+         // if the module is not found in the progress data, return a new array with the module id, name and completed status
+        return [...prevData, { id: moduleId, name: moduleName, completed: completedStatus }];
       }
     });
 
     try {
       const token = await getAuthToken(); // authenticate the user
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}; // set the authorization header with the token if available, otherwise use an empty configuration
+
+       // set the authorization header with the token if available, otherwise use an empty configuration
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       const endpoint = `/api/modules/${moduleId}/complete`; // set the endpoint to the module complete endpoint
       await apiService.post(endpoint, { completed: completedStatus }, config); // mark the module as complete on the backend
       console.log(`ProgressContext: Marked module ${moduleId} as ${completedStatus ? 'complete' : 'incomplete'} on backend.`);
@@ -148,7 +157,9 @@ export const ProgressProvider = ({ children }) => {
 
     try {
       const token = await getAuthToken(); // authenticate the user
-      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}; // set the authorization header with the token if available, otherwise use an empty configuration
+
+       // set the authorization header with the token if available, otherwise use an empty configuration
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       console.log("ProgressContext: Calling POST /api/progress/reset-times");
       await apiService.post('/api/progress/reset-times', {}, config); // reset the time spent on all modules on the backend
       console.log("ProgressContext: Successfully reset all module times on backend.");

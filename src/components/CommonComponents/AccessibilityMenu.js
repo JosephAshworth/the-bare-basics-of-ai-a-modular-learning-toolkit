@@ -275,7 +275,7 @@ function AccessibilityMenu() {
               bgcolor: theme.palette.primary.main,
               color: theme.palette.primary.contrastText,
               '&:hover': {
-                bgcolor: theme.palette.primary.dark,
+                bgcolor: theme.palette.primary.dark
               }
             }}
           >

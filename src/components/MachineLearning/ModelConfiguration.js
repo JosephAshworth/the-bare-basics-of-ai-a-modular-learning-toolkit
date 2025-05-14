@@ -114,7 +114,7 @@ const ModelConfiguration = ({
           size="small"
           sx={{ 
             color: theme.palette.grey[500],
-            mr: 0.5,
+            mr: 0.5
           }}
           onClick={handleOpenTestSizeInfo}
           aria-label="Test Size Information"

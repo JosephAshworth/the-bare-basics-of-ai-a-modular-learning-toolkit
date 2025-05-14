@@ -55,7 +55,7 @@ const ModelConfiguration = ({
   const handleNNeighborsChange = (e) => {
     const value = parseInt(e.target.value, 10);
     if (isNaN(value) || value < 1) {
-      onNNeighborsChange({ target: { value: 1 } });
+      onNNeighborsChange({ target: { value: 5 } });
     } else {
       onNNeighborsChange(e);
     }

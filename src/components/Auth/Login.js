@@ -78,7 +78,7 @@ const Login = () => {
     >
       {/* the container for the login page */}
       <Paper 
-        elevation={3} // add a shadow effect
+        elevation={3}
         sx={{ 
             p: 4, // add inside padding, with space aroud the content
             display: 'flex',

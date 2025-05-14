@@ -17,7 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 
-const InstructionsDialog = () => {
+const Instructions = () => {
   const theme = useTheme();
   const [instructionsOpen, setInstructionsOpen] = useState(false);
 
@@ -117,4 +117,4 @@ const InstructionsDialog = () => {
   );
 };
 
-export default InstructionsDialog;
+export default Instructions;

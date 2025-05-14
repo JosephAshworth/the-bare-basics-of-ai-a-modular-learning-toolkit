@@ -141,8 +141,7 @@ const TextEmotionTab = () => {
                   alignItems: 'flex-start', // align the text to the top of the input field
                   '& textarea': {
                     color: theme.palette.text.primary,
-                    height: '100% !important', // force the textarea to match the height of its parent container
-                    overflowY: 'auto !important' // enable vertical scrolling when text exceeds the container's height
+                    height: '100% !important' // force the textarea to match the height of its parent container
                   }
                 }
               }}
@@ -273,7 +272,7 @@ const TextEmotionTab = () => {
             variant="body2"
             sx={{ mb: 1 }}
           >
-            <strong>• Bias:</strong> Odbal (Inner Mongolia University) explored how certain text emotion detectors assign certain emotions to a gender. For example, feelings such as "joy" and "sadness" tend more towards women, whereas "anger" tends more towards men.
+            <strong>• Bias:</strong> Odbal (Inner Mongolia University) explored how certain text emotion detectors assigning certain emotions to a gender. For example, feelings such as "joy" and "sadness" tend more towards women, whereas "anger" tends more towards men.
           </Typography>
           <Typography
             variant="body2"

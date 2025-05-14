@@ -56,3 +56,5 @@ static/
 *.swp
 *.bak
 *.tmp
+
+**/ means ignore all files and folders in all subdirectories (for maintainability)

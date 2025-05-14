@@ -61,7 +61,7 @@ const HeroSection = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <Paper
-              elevation={isDarkMode ? 4 : 1} // increase shadow depth in dark mode for better contrast
+              elevation={isDarkMode ? 4 : 1}
               sx={{
                 p: 4,
                 borderRadius: '24px',

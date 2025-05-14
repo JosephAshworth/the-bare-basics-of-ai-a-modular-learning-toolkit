@@ -7,6 +7,7 @@ import {
   Navigate 
 } from 'react-router-dom';
 
+import { Box } from '@mui/material';
 import { useAuth } from './context/AuthContext'; 
 
 // import the components for the authentication pages
@@ -31,7 +32,7 @@ const ProtectedRoute = ({ children }) => {
   const { currentUser, loading } = useAuth(); 
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>; 
+    return <div>Loading...</div>; 
   }
 
   if (!currentUser) {
@@ -45,12 +46,12 @@ function App() {
   
   return (
     <Router> 
-      {/* ensure the application is wrapped in a router */}
-      <div className="min-h-screen flex flex-col">
-        <div className="sticky top-0 z-50">
+      {/* ensure the application is wrapped in a router to allow programmatic navigation */}
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <Box position="sticky" top={0} zIndex={1000} component="main" sx={{ flexGrow: 1 }}>
           <Header /> 
-        </div>
-        <main className="flex-grow" id="main-content" data-content-spacing> 
+        </Box>
+        <Box component="main" sx={{ flexGrow: 1 }} id="main-content">
           <Routes> 
             {/* the home page, which is the main page of the application */}
             {/* protected so that only logged in users can access it */}
@@ -88,10 +89,10 @@ function App() {
               </ProtectedRoute>
             } /> 
           </Routes>
-        </main>
+        </Box>
         <Footer /> 
         <AccessibilityMenu /> 
-      </div>
+      </Box>
     </Router>
   );
 }

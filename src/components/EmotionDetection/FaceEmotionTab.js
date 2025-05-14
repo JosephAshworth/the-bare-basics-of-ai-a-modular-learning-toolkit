@@ -239,7 +239,7 @@ const FaceEmotionTab = () => {
 
       <Grid item xs={12} md={6}>
         <Paper
-          elevation={theme.palette.mode === 'dark' ? 4 : 3} // add a shadow of 4px for dark mode and 3px for light mode
+          elevation={theme.palette.mode === 'dark' ? 4 : 3} // make the paper appear further from the background
           sx={{
             p: 4,
             borderRadius: '16px',

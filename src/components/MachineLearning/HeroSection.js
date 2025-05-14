@@ -33,7 +33,7 @@ const HeroSection = () => {
                   fontWeight: 800,
                   mb: 2,
                   lineHeight: 1.2, // set the line height to 1.2 times the font size for better readability
-                  color: theme.palette.text.primary,
+                  color: theme.palette.text.primary
                 }}
               >
                 Machine Learning

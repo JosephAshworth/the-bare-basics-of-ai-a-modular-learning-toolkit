@@ -22,7 +22,6 @@ function HomePage() {
         background: theme.palette.background.default
       }}
     >
-      <InstructionsDialog />
 
       <HeroSection />
       

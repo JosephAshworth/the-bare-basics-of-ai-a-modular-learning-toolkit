@@ -139,7 +139,7 @@ export const detectAudioEmotions = async (audioFile, setLoading, setError, setEm
       console.warn(`Uncommon audio format: ${fileExtension}. This might cause processing issues.`);
     }
     
-    if (audioFile.size > 10 * 1024 * 1024) {
+    if (audioFile.size > 10 * 1024 * 1024) { // larger than 10MB
       console.warn(`Large audio file (${(audioFile.size / (1024 * 1024)).toFixed(2)}MB). Consider using a smaller file.`);
     }
     

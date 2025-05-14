@@ -13,15 +13,13 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 // import the themes from the theme.js file
 import {
   lightTheme, 
-  darkTheme, 
-  accessibleTheme 
+  darkTheme
 } from '../styles/Theme'; 
 
 // define the themes
 export const themes = {
   LIGHT: 'light',
-  DARK: 'dark',
-  ACCESSIBLE: 'accessible',
+  DARK: 'dark'
 };
 
 // create the theme context
@@ -85,9 +83,7 @@ export const ThemeProvider = ({ children }) => {
     switch (theme) { // execute different theme objects based on the theme
       case themes.DARK:
         return darkTheme;
-      case themes.ACCESSIBLE:
-        return accessibleTheme;
-      default:
+      default: // if the theme is not dark, return the light theme
         return lightTheme;
     }
   };

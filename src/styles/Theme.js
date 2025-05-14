@@ -118,12 +118,3 @@ export const darkTheme = createTheme({
   }
 });
 
-// a theme that is accessible to users with disabilities
-export const accessibleTheme = createTheme({ 
-  typography: {
-    ...baseTheme.typography, // extend the base theme text
-    fontSize: 16, // set the default font size to 16px
-  }
-
-  // colours are kept the same
-});

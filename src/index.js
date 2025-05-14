@@ -17,7 +17,7 @@ root.render(
     <AuthProvider> {/* provide global auth state */}
       <ProgressProvider> {/* provide user progress state */}
         <ThemeProvider> {/* provide global theme settings */}
-          <CssBaseline /> {/* ensure consistent styling across different browsers */}
+          <CssBaseline />
           <App /> {/* render the main App component */}
         </ThemeProvider>
       </ProgressProvider>

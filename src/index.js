@@ -9,6 +9,7 @@ import App from './App'; // import the main App component
 import { ThemeProvider } from './context/ThemeContext'; // import custom theme context provider
 import { AuthProvider } from './context/AuthContext'; // import authentication context provider
 import { ProgressProvider } from './context/ProgressContext'; // import progress tracking context provider
+import { CssBaseline } from '@mui/material'; // consistent styling across different browsers
 
 const root = ReactDOM.createRoot(document.getElementById('root')); // create the React root using the HTML element with id 'root'
 root.render(
@@ -16,6 +17,7 @@ root.render(
     <AuthProvider> {/* provide global auth state */}
       <ProgressProvider> {/* provide user progress state */}
         <ThemeProvider> {/* provide global theme settings */}
+          <CssBaseline /> {/* ensure consistent styling across different browsers */}
           <App /> {/* render the main App component */}
         </ThemeProvider>
       </ProgressProvider>

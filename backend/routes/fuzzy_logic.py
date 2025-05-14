@@ -29,9 +29,9 @@ def initialise_comfort_system():
         comfort = ctrl.Consequent(np.arange(0, 101, 1), 'comfort') # from 0 to 100
 
         # define how to classify temperature, humidity, and comfort levels
-        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 15]) # cold is between 0 and 15
-        temperature['moderate'] = fuzz.trimf(temperature.universe, [15, 23, 30]) # moderate is between 15 and 30
-        temperature['hot'] = fuzz.trimf(temperature.universe, [28, 50, 50]) # hot is between 28 and 50
+        temperature['cold'] = fuzz.trimf(temperature.universe, [0, 0, 15]) # cold is between 0 and 15, with coldest at 0
+        temperature['moderate'] = fuzz.trimf(temperature.universe, [15, 23, 30]) # moderate is between 15 and 30, with most moderate at 23
+        temperature['hot'] = fuzz.trimf(temperature.universe, [28, 50, 50]) # hot is between 28 and 50, with hottest at 50
 
         humidity['dry'] = fuzz.trimf(humidity.universe, [0, 0, 30])
         humidity['normal'] = fuzz.trimf(humidity.universe, [30, 50, 70])

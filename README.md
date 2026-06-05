@@ -220,3 +220,5 @@ To enable Firebase functionality on the backend:
    ```
 
 ---
+
+Alternatively, you can access the deployed AWS site [here.](https://dpfobwhi02828.cloudfront.net/)

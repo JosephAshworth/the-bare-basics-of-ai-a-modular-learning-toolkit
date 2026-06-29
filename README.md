@@ -218,7 +218,3 @@ To enable Firebase functionality on the backend:
    ```
    http://localhost:3000
    ```
-
----
-
-Alternatively, you can access the deployed AWS site [here.](https://dpfobwhi02828.cloudfront.net/)
